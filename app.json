@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "LATE",
+    "slug": "late",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "lateapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.mruhlsolutions.late"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FF6B35"
+      },
+      "package": "com.mruhlsolutions.late"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "LATE necesita tu ubicación para encontrar coleccionistas cercanos.",
+          "locationWhenInUsePermission": "LATE necesita tu ubicación para encontrar coleccionistas cercanos."
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
