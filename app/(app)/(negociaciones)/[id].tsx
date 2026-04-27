@@ -72,6 +72,21 @@ export default function ChatScreen() {
 
   useEffect(() => {
     cargarIntercambio();
+
+    // Suscripción realtime: cuando la contraparte cambia el estado del
+    // intercambio (confirma, cancela, finaliza) se recarga automáticamente.
+    const channel = supabase
+      .channel(`intercambio:${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'intercambios', filter: `id=eq.${id}` },
+        () => cargarIntercambio(),
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, [id]);
 
   const handleEnviar = async () => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Pressable,
   TextInput,
   Modal,
+  RefreshControl,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,6 +40,17 @@ export default function PerfilScreen() {
   const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [joinCodigo, setJoinCodigo] = useState('');
   const [joining, setJoining] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      fetchProfile(),
+      fetchMisGrupos(),
+      user ? promedioEstrellas(user.id).then(setPromedio) : Promise.resolve(),
+    ]);
+    setRefreshing(false);
+  }, [fetchProfile, fetchMisGrupos, promedioEstrellas, user]);
 
   useEffect(() => {
     fetchProfile();
@@ -153,7 +165,12 @@ export default function PerfilScreen() {
         </View>
       </Modal>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#7C3AED" />
+        }
+      >
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <View>

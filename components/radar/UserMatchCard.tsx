@@ -26,7 +26,9 @@ export function UserMatchCard({ match }: UserMatchCardProps) {
       <View style={styles.top}>
         <View style={styles.leftCol}>
           <Text style={styles.alias}>{match.alias}</Text>
-          <Text style={styles.distancia}>{match.distancia_km} km</Text>
+          {match.distancia_km != null && (
+            <Text style={styles.distancia}>{match.distancia_km} km</Text>
+          )}
         </View>
 
         <View style={styles.rightCol}>
