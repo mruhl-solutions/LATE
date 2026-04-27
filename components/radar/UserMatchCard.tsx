@@ -7,6 +7,12 @@ interface UserMatchCardProps {
   match: MatchResult;
 }
 
+function formatStickers(nums: number[], max = 6): string {
+  if (nums.length === 0) return '';
+  const preview = nums.slice(0, max).join(', ');
+  return nums.length > max ? `${preview} +${nums.length - max} más` : preview;
+}
+
 export function UserMatchCard({ match }: UserMatchCardProps) {
   const router = useRouter();
 
@@ -15,52 +21,64 @@ export function UserMatchCard({ match }: UserMatchCardProps) {
       pathname: '/(app)/(radar)/proponer',
       params: {
         receptor_id: match.usuario_id,
+        alias: match.alias,
         ellos_tienen: JSON.stringify(match.ellos_tienen_yo_busco),
         yo_tengo: JSON.stringify(match.yo_tengo_ellos_buscan),
       },
     } as never);
   };
 
+  const tieneMias = match.ellos_tienen_yo_busco.length > 0;
+  const necesitaMias = match.yo_tengo_ellos_buscan.length > 0;
+
   return (
     <View style={styles.card}>
-      <View style={styles.top}>
-        <View style={styles.leftCol}>
-          <Text style={styles.alias}>{match.alias}</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.alias}>@{match.alias}</Text>
           {match.distancia_km != null && (
-            <Text style={styles.distancia}>{match.distancia_km} km</Text>
+            <Text style={styles.distancia}>
+              <Ionicons name="location-outline" size={11} color="#6B7280" /> {match.distancia_km} km
+            </Text>
           )}
         </View>
-
-        <View style={styles.rightCol}>
-          {match.es_bidireccional && (
-            <View style={styles.biBadge}>
-              <Ionicons name="swap-horizontal" size={12} color="#22C55E" />
-              <Text style={styles.biText}>Match mutuo</Text>
-            </View>
-          )}
-          <Text style={styles.totalCoincidencias}>
-            {match.total_coincidencias} coincidencia
-            {match.total_coincidencias !== 1 ? 's' : ''}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.coincidenciasRow}>
-        {match.ellos_tienen_yo_busco.length > 0 && (
-          <View style={styles.pill}>
-            <Text style={styles.pillLabel}>Ellos tienen</Text>
-            <Text style={styles.pillCount}>{match.ellos_tienen_yo_busco.length}</Text>
-          </View>
-        )}
-        {match.yo_tengo_ellos_buscan.length > 0 && (
-          <View style={[styles.pill, styles.pillGreen]}>
-            <Text style={styles.pillLabel}>Yo ofrezco</Text>
-            <Text style={styles.pillCount}>{match.yo_tengo_ellos_buscan.length}</Text>
+        {match.es_bidireccional && (
+          <View style={styles.biBadge}>
+            <Ionicons name="checkmark-circle" size={12} color="#22C55E" />
+            <Text style={styles.biText}>Intercambio posible</Text>
           </View>
         )}
       </View>
+
+      {/* Lo que tiene que yo busco */}
+      {tieneMias && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.dot, { backgroundColor: '#3B82F6' }]} />
+            <Text style={styles.sectionLabel}>
+              Tiene {match.ellos_tienen_yo_busco.length} que buscás
+            </Text>
+          </View>
+          <Text style={styles.numeros}>{formatStickers(match.ellos_tienen_yo_busco)}</Text>
+        </View>
+      )}
+
+      {/* Lo que necesita y yo tengo */}
+      {necesitaMias && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.dot, { backgroundColor: '#F59E0B' }]} />
+            <Text style={styles.sectionLabel}>
+              Necesita {match.yo_tengo_ellos_buscan.length} que tenés
+            </Text>
+          </View>
+          <Text style={styles.numeros}>{formatStickers(match.yo_tengo_ellos_buscan)}</Text>
+        </View>
+      )}
 
       <Pressable style={styles.proponerBtn} onPress={handleProponer}>
+        <Ionicons name="swap-horizontal" size={16} color="#fff" />
         <Text style={styles.proponerText}>Proponer intercambio</Text>
       </Pressable>
     </View>
@@ -70,44 +88,49 @@ export function UserMatchCard({ match }: UserMatchCardProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#1F2937',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 10,
+    gap: 12,
   },
-  top: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  leftCol: {},
-  alias: { fontSize: 17, fontWeight: '700', color: '#F9FAFB' },
-  distancia: { fontSize: 13, color: '#6B7280', marginTop: 2 },
-  rightCol: { alignItems: 'flex-end', gap: 4 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  headerLeft: { gap: 2 },
+  alias: { fontSize: 17, fontWeight: '800', color: '#F9FAFB' },
+  distancia: { fontSize: 12, color: '#6B7280' },
   biBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     backgroundColor: '#052e16',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#16653444',
   },
   biText: { fontSize: 11, color: '#22C55E', fontWeight: '700' },
-  totalCoincidencias: { fontSize: 13, color: '#A78BFA', fontWeight: '600' },
-  coincidenciasRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#2e1065',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
+  section: {
+    backgroundColor: '#111827',
+    borderRadius: 10,
+    padding: 10,
+    gap: 4,
   },
-  pillGreen: { backgroundColor: '#052e16' },
-  pillLabel: { fontSize: 12, color: '#9CA3AF' },
-  pillCount: { fontSize: 13, fontWeight: '800', color: '#F9FAFB' },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dot: { width: 7, height: 7, borderRadius: 4 },
+  sectionLabel: { fontSize: 12, fontWeight: '700', color: '#D1D5DB' },
+  numeros: { fontSize: 12, color: '#6B7280', lineHeight: 18, paddingLeft: 13 },
   proponerBtn: {
     backgroundColor: '#7C3AED',
     borderRadius: 10,
-    paddingVertical: 10,
+    paddingVertical: 11,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 7,
   },
   proponerText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

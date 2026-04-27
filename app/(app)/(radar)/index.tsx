@@ -10,6 +10,7 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,15 +27,15 @@ type Tab = 'global' | 'grupos';
 
 export default function RadarScreen() {
   const { matches, loading, error, inventarioVacio, buscarMatches } = useRadar();
-  const { profile, fetchProfile, updateRadio } = useProfile();
+  const { profile, fetchProfile, updateRadio, updateVisible } = useProfile();
   const { misGrupos, fetchMisGrupos, buscarMatchesGrupo } = useGrupo();
 
   const [tab, setTab] = useState<Tab>('global');
   const [radioModal, setRadioModal] = useState(false);
   const [radioInput, setRadioInput] = useState('');
   const [savingRadio, setSavingRadio] = useState(false);
+  const [togglingVisible, setTogglingVisible] = useState(false);
 
-  // Estado para la tab Grupos
   const [selectedGrupo, setSelectedGrupo] = useState<Grupo | null>(null);
   const [groupMatches, setGroupMatches] = useState<MatchResult[]>([]);
   const [loadingGroup, setLoadingGroup] = useState(false);
@@ -42,8 +43,8 @@ export default function RadarScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchProfile();
-      buscarMatches();
       fetchMisGrupos();
+      if (profile?.visible_radar) buscarMatches();
     }, [fetchProfile, buscarMatches, fetchMisGrupos]),
   );
 
@@ -51,14 +52,12 @@ export default function RadarScreen() {
     if (profile) setRadioInput(String(profile.radio_km));
   }, [profile]);
 
-  // Auto-seleccionar el primer grupo al cargar
   useEffect(() => {
     if (misGrupos.length > 0 && !selectedGrupo) {
       setSelectedGrupo(misGrupos[0]);
     }
   }, [misGrupos]);
 
-  // Cargar matches cuando cambia el grupo seleccionado
   useEffect(() => {
     if (selectedGrupo && tab === 'grupos') {
       fetchGroupMatches(selectedGrupo.id);
@@ -82,6 +81,21 @@ export default function RadarScreen() {
     if (newTab === 'grupos' && selectedGrupo) {
       fetchGroupMatches(selectedGrupo.id);
     }
+    if (newTab === 'global' && profile?.visible_radar) {
+      buscarMatches();
+    }
+  };
+
+  const handleToggleVisible = async (value: boolean) => {
+    setTogglingVisible(true);
+    try {
+      await updateVisible(value);
+      if (value) buscarMatches();
+    } catch {
+      Alert.alert('Error', 'No se pudo actualizar la visibilidad.');
+    } finally {
+      setTogglingVisible(false);
+    }
   };
 
   const handleGuardarRadio = async () => {
@@ -94,7 +108,7 @@ export default function RadarScreen() {
     try {
       await updateRadio(km);
       setRadioModal(false);
-      buscarMatches();
+      if (profile?.visible_radar) buscarMatches();
     } catch {
       Alert.alert('Error', 'No se pudo actualizar el radio.');
     } finally {
@@ -111,6 +125,8 @@ export default function RadarScreen() {
     ({ item }: { item: MatchResult }) => <UserMatchCard match={item} />,
     [],
   );
+
+  const isVisible = profile?.visible_radar ?? false;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -156,7 +172,7 @@ export default function RadarScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Radar</Text>
-        {tab === 'global' && (
+        {tab === 'global' && isVisible && (
           <Pressable style={styles.radioPill} onPress={() => setRadioModal(true)}>
             <Ionicons name="navigate-circle-outline" size={14} color="#7C3AED" />
             <Text style={styles.radioPillText}>{profile?.radio_km ?? '…'} km</Text>
@@ -173,7 +189,7 @@ export default function RadarScreen() {
         >
           <Ionicons name="globe-outline" size={14} color={tab === 'global' ? '#fff' : '#6B7280'} />
           <Text style={[styles.tabText, tab === 'global' && styles.tabTextActive]}>
-            Global{matches.length > 0 ? ` (${matches.length})` : ''}
+            Global{isVisible && matches.length > 0 ? ` (${matches.length})` : ''}
           </Text>
         </Pressable>
         <Pressable
@@ -189,7 +205,31 @@ export default function RadarScreen() {
 
       {/* ── Tab Global ── */}
       {tab === 'global' && (
-        error ? (
+        !isVisible ? (
+          /* Usuario oculto en radar global */
+          <ScrollView contentContainerStyle={styles.centered}>
+            <View style={styles.hiddenBox}>
+              <Ionicons name="eye-off-outline" size={40} color="#374151" />
+              <Text style={styles.hiddenTitle}>Estás oculto en el radar</Text>
+              <Text style={styles.hiddenSubtitle}>
+                Activá el radar global para aparecer y ver coincidencias cerca tuyo.
+              </Text>
+              <View style={styles.toggleRow}>
+                <Text style={styles.toggleLabel}>Activar radar global</Text>
+                {togglingVisible ? (
+                  <ActivityIndicator color="#7C3AED" size="small" />
+                ) : (
+                  <Switch
+                    value={isVisible}
+                    onValueChange={handleToggleVisible}
+                    trackColor={{ false: '#374151', true: '#7C3AED' }}
+                    thumbColor="#fff"
+                  />
+                )}
+              </View>
+            </View>
+          </ScrollView>
+        ) : error ? (
           <ScrollView contentContainerStyle={styles.centered} refreshControl={<RefreshControl refreshing={loading} onRefresh={buscarMatches} />}>
             <EmptyState icon="warning-outline" title="Error de ubicación" subtitle={error} action={{ label: 'Reintentar', onPress: buscarMatches }} />
           </ScrollView>
@@ -202,14 +242,29 @@ export default function RadarScreen() {
             data={matches}
             renderItem={renderGlobalItem}
             keyExtractor={(item) => item.usuario_id}
-            estimatedItemSize={130}
+            estimatedItemSize={150}
             contentContainerStyle={styles.list}
             refreshControl={<RefreshControl refreshing={loading} onRefresh={buscarMatches} />}
+            ListHeaderComponent={
+              <View style={styles.visibleToggleBar}>
+                <Text style={styles.visibleToggleLabel}>Visible en el radar</Text>
+                {togglingVisible ? (
+                  <ActivityIndicator color="#7C3AED" size="small" />
+                ) : (
+                  <Switch
+                    value={isVisible}
+                    onValueChange={handleToggleVisible}
+                    trackColor={{ false: '#374151', true: '#7C3AED' }}
+                    thumbColor="#fff"
+                  />
+                )}
+              </View>
+            }
             ListEmptyComponent={
               !loading ? (
                 <EmptyState
                   icon="radio-outline"
-                  title="Sin matches cerca"
+                  title="Sin coincidencias cerca"
                   subtitle={'Necesitás figuritas COMPLEMENTARIAS para matchear:\nlo que vos repetiste debe coincidir con lo que otro busca.'}
                   action={{ label: 'Buscar de nuevo', onPress: buscarMatches }}
                 />
@@ -231,26 +286,28 @@ export default function RadarScreen() {
           </ScrollView>
         ) : (
           <View style={styles.flex}>
-            {/* Selector de grupo */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.groupPills}>
-              {misGrupos.map((g) => {
-                const isSelected = g.id === selectedGrupo?.id;
-                return (
-                  <Pressable
-                    key={g.id}
-                    style={[styles.groupPill, isSelected && styles.groupPillActive]}
-                    onPress={() => {
-                      setSelectedGrupo(g);
-                      fetchGroupMatches(g.id);
-                    }}
-                  >
-                    <Text style={[styles.groupPillText, isSelected && styles.groupPillTextActive]}>
-                      {g.nombre}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+            {/* Selector de grupo — altura máxima para que no desborde */}
+            <View style={styles.groupPillsWrapper}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.groupPills}>
+                {misGrupos.map((g) => {
+                  const isSelected = g.id === selectedGrupo?.id;
+                  return (
+                    <Pressable
+                      key={g.id}
+                      style={[styles.groupPill, isSelected && styles.groupPillActive]}
+                      onPress={() => {
+                        setSelectedGrupo(g);
+                        fetchGroupMatches(g.id);
+                      }}
+                    >
+                      <Text style={[styles.groupPillText, isSelected && styles.groupPillTextActive]}>
+                        {g.nombre}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
 
             {/* Matches del grupo */}
             {loadingGroup ? (
@@ -262,7 +319,7 @@ export default function RadarScreen() {
                 data={groupMatches}
                 renderItem={renderGroupItem}
                 keyExtractor={(item) => item.usuario_id}
-                estimatedItemSize={130}
+                estimatedItemSize={150}
                 contentContainerStyle={styles.list}
                 refreshControl={
                   <RefreshControl
@@ -328,7 +385,48 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: '#7C3AED' },
   tabText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
   tabTextActive: { color: '#fff' },
-  // Group pills
+  // Global hidden state
+  hiddenBox: {
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#1F2937',
+    borderRadius: 20,
+    padding: 28,
+    marginHorizontal: 4,
+  },
+  hiddenTitle: { fontSize: 18, fontWeight: '800', color: '#F9FAFB', textAlign: 'center' },
+  hiddenSubtitle: { fontSize: 13, color: '#6B7280', textAlign: 'center', lineHeight: 19 },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 8,
+    backgroundColor: '#111827',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    width: '100%',
+    justifyContent: 'space-between',
+  },
+  toggleLabel: { fontSize: 14, fontWeight: '600', color: '#F9FAFB' },
+  // Visible toggle bar shown at top of results list
+  visibleToggleBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1F2937',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  visibleToggleLabel: { fontSize: 13, fontWeight: '600', color: '#9CA3AF' },
+  // Group pills with maxHeight to prevent overflow
+  groupPillsWrapper: {
+    maxHeight: 58,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1F2937',
+  },
   groupPills: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
   groupPill: {
     paddingHorizontal: 14,

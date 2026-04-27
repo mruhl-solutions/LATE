@@ -25,7 +25,7 @@ import { cleanInventoryString, arrayToDisplayString } from '@/lib/parsers';
 import type { Grupo } from '@/types/app';
 
 export default function PerfilScreen() {
-  const { profile, fetchProfile, updateInventario } = useProfile();
+  const { profile, fetchProfile, updateInventario, updateTotalFiguritas } = useProfile();
   const { signOut } = useAuth();
   const { misGrupos, fetchMisGrupos, crearGrupo, unirseAGrupo, salirDeGrupo, eliminarGrupo } = useGrupo();
   const { promedioEstrellas } = useCalificacion();
@@ -37,6 +37,8 @@ export default function PerfilScreen() {
   const [saving, setSaving] = useState(false);
   const [promedio, setPromedio] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [totalModal, setTotalModal] = useState(false);
+  const [totalInput, setTotalInput] = useState('');
 
   // Modal unirse
   const [joinModalVisible, setJoinModalVisible] = useState(false);
@@ -66,6 +68,7 @@ export default function PerfilScreen() {
     if (profile) {
       setFaltantesStr(arrayToDisplayString(profile.faltantes));
       setRepetidasStr(arrayToDisplayString(profile.repetidas));
+      setTotalInput(String(profile.total_figuritas ?? 638));
     }
   }, [profile]);
 
@@ -81,6 +84,20 @@ export default function PerfilScreen() {
       Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo guardar.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleGuardarTotal = async () => {
+    const n = parseInt(totalInput, 10);
+    if (isNaN(n) || n < 10 || n > 2000) {
+      Alert.alert('Valor inválido', 'El total debe estar entre 10 y 2000.');
+      return;
+    }
+    try {
+      await updateTotalFiguritas(n);
+      setTotalModal(false);
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo guardar.');
     }
   };
 
@@ -160,6 +177,29 @@ export default function PerfilScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Modal total figuritas */}
+      <Modal visible={totalModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Total del álbum</Text>
+            <Text style={styles.modalSubtitle}>¿Cuántas figuritas tiene el álbum completo?</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Ej: 638"
+              placeholderTextColor="#6B7280"
+              value={totalInput}
+              onChangeText={setTotalInput}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+            <AppButton title="Guardar" onPress={handleGuardarTotal} />
+            <Pressable onPress={() => setTotalModal(false)} style={styles.modalCancel}>
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       {/* Modal unirse */}
       <Modal visible={joinModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
@@ -206,11 +246,18 @@ export default function PerfilScreen() {
 
         {/* Inventario */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mi Álbum</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Mi Álbum</Text>
+            <Pressable style={styles.grupoActionBtn} onPress={() => setTotalModal(true)}>
+              <Ionicons name="options-outline" size={13} color="#7C3AED" />
+              <Text style={styles.grupoActionText}>{profile?.total_figuritas ?? 638} fig.</Text>
+            </Pressable>
+          </View>
           {profile && (
             <AlbumStats
               faltantes={profile.faltantes.length}
               repetidas={profile.repetidas.length}
+              totalFiguritas={profile.total_figuritas ?? 638}
             />
           )}
           <InventarioInput

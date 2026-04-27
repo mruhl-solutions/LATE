@@ -16,6 +16,8 @@ export interface Database {
           radio_km: number;
           faltantes: number[];
           repetidas: number[];
+          visible_radar: boolean;
+          total_figuritas: number;
           created_at: string;
           updated_at: string;
         };
@@ -26,6 +28,8 @@ export interface Database {
           radio_km?: number;
           faltantes?: number[];
           repetidas?: number[];
+          visible_radar?: boolean;
+          total_figuritas?: number;
         };
         Update: {
           alias?: string;
@@ -33,6 +37,8 @@ export interface Database {
           radio_km?: number;
           faltantes?: number[];
           repetidas?: number[];
+          visible_radar?: boolean;
+          total_figuritas?: number;
         };
       };
       grupos: {

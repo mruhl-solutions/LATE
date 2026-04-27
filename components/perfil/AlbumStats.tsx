@@ -1,14 +1,15 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { TOTAL_FIGURITAS } from '@/constants/config';
 
 interface AlbumStatsProps {
   faltantes: number;
   repetidas: number;
+  totalFiguritas: number;
 }
 
-export function AlbumStats({ faltantes, repetidas }: AlbumStatsProps) {
-  const completadas = TOTAL_FIGURITAS - faltantes;
-  const pct = Math.max(0, Math.min(1, completadas / TOTAL_FIGURITAS));
+export function AlbumStats({ faltantes, repetidas, totalFiguritas }: AlbumStatsProps) {
+  const total = totalFiguritas > 0 ? totalFiguritas : 1;
+  const completadas = Math.max(0, total - faltantes);
+  const pct = Math.max(0, Math.min(1, completadas / total));
 
   return (
     <View style={styles.container}>
@@ -24,7 +25,7 @@ export function AlbumStats({ faltantes, repetidas }: AlbumStatsProps) {
 
       <View style={styles.barLabels}>
         <Text style={styles.barPct}>{Math.round(pct * 100)}% completado</Text>
-        <Text style={styles.barTotal}>{completadas} / {TOTAL_FIGURITAS}</Text>
+        <Text style={styles.barTotal}>{completadas} / {totalFiguritas}</Text>
       </View>
     </View>
   );

@@ -50,5 +50,31 @@ export function useProfile() {
     [user],
   );
 
-  return { profile, loading, error, fetchProfile, updateInventario, updateRadio };
+  const updateVisible = useCallback(
+    async (visible_radar: boolean) => {
+      if (!user) return;
+      const { error: err } = await supabase
+        .from('profiles')
+        .update({ visible_radar })
+        .eq('id', user.id);
+      if (err) throw err;
+      setProfile((prev) => (prev ? { ...prev, visible_radar } : prev));
+    },
+    [user],
+  );
+
+  const updateTotalFiguritas = useCallback(
+    async (total_figuritas: number) => {
+      if (!user) return;
+      const { error: err } = await supabase
+        .from('profiles')
+        .update({ total_figuritas })
+        .eq('id', user.id);
+      if (err) throw err;
+      setProfile((prev) => (prev ? { ...prev, total_figuritas } : prev));
+    },
+    [user],
+  );
+
+  return { profile, loading, error, fetchProfile, updateInventario, updateRadio, updateVisible, updateTotalFiguritas };
 }

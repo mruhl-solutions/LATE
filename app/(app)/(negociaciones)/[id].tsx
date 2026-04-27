@@ -28,7 +28,7 @@ export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
   const user = useAuthStore((s) => s.user);
-  const { confirmar, cancelar, finalizar } = useIntercambios();
+  const { confirmar, cancelar, finalizar, eliminarChat } = useIntercambios();
   const { calificar, yaCalifique } = useCalificacion();
 
   const [intercambio, setIntercambio] = useState<IntercambioConAlias | null>(null);
@@ -125,6 +125,27 @@ export default function ChatScreen() {
         },
       },
     ]);
+  };
+
+  const handleEliminarChat = () => {
+    Alert.alert(
+      'Eliminar chat',
+      '¿Eliminar todos los mensajes de este chat? No se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await eliminarChat(id!);
+            } catch (e: unknown) {
+              Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo eliminar.');
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleCalificar = async (estrellas: number) => {
@@ -247,6 +268,10 @@ export default function ChatScreen() {
                 ? '✅ Intercambio finalizado · Chat guardado'
                 : '❌ Intercambio cancelado · Chat guardado'}
             </Text>
+            <Pressable onPress={handleEliminarChat} style={styles.deleteChatBtn}>
+              <Ionicons name="trash-outline" size={13} color="#EF4444" />
+              <Text style={styles.deleteChatText}>Eliminar chat</Text>
+            </Pressable>
           </View>
         )}
       </KeyboardAvoidingView>
@@ -351,6 +376,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#374151',
+    gap: 8,
   },
   terminadoText: { color: '#6B7280', fontSize: 13 },
+  deleteChatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#EF444433',
+  },
+  deleteChatText: { fontSize: 12, color: '#EF4444', fontWeight: '600' },
 });

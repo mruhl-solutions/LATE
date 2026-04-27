@@ -8,15 +8,15 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { Ionicons } from '@expo/vector-icons';
 import { useIntercambios } from '@/lib/hooks/useIntercambios';
 import { cleanInventoryString, arrayToDisplayString } from '@/lib/parsers';
 import { AppButton } from '@/components/ui/AppButton';
-import type { Profile } from '@/types/app';
 
 export default function ProponerScreen() {
-  const { receptor_id, ellos_tienen, yo_tengo } = useLocalSearchParams<{
+  const { receptor_id, alias, ellos_tienen, yo_tengo } = useLocalSearchParams<{
     receptor_id: string;
+    alias: string;
     ellos_tienen: string;
     yo_tengo: string;
   }>();
@@ -24,40 +24,34 @@ export default function ProponerScreen() {
   const router = useRouter();
   const { crearIntercambio } = useIntercambios();
 
-  const [receptor, setReceptor] = useState<Pick<Profile, 'alias'> | null>(null);
-  const [pedidos, setPedidos] = useState('');
-  const [ofrecidos, setOfrecidos] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
   const ellosTienen = ellos_tienen ? (JSON.parse(ellos_tienen) as number[]) : [];
   const yoTengo = yo_tengo ? (JSON.parse(yo_tengo) as number[]) : [];
 
-  useEffect(() => {
-    if (!receptor_id) return;
-    supabase
-      .from('profiles')
-      .select('alias')
-      .eq('id', receptor_id)
-      .single()
-      .then(({ data }) => setReceptor(data));
+  const [recibo, setRecibo] = useState('');
+  const [doy, setDoy] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-    setPedidos(arrayToDisplayString(ellosTienen));
-    setOfrecidos(arrayToDisplayString(yoTengo));
-  }, [receptor_id]);
+  useEffect(() => {
+    setRecibo(arrayToDisplayString(ellosTienen));
+    setDoy(arrayToDisplayString(yoTengo));
+  }, []);
+
+  const reciboCount = cleanInventoryString(recibo).length;
+  const doyCount = cleanInventoryString(doy).length;
 
   const handleEnviar = async () => {
-    const numPedidos = cleanInventoryString(pedidos);
-    const numOfrecidos = cleanInventoryString(ofrecidos);
+    const numPedidos = cleanInventoryString(recibo);
+    const numOfrecidos = cleanInventoryString(doy);
 
     if (numPedidos.length === 0 && numOfrecidos.length === 0) {
-      Alert.alert('Error', 'Ingresá al menos un número a pedir u ofrecer.');
+      Alert.alert('Faltan datos', 'Completá al menos una de las dos secciones.');
       return;
     }
 
     setSubmitting(true);
     try {
       await crearIntercambio(receptor_id!, numPedidos, numOfrecidos);
-      Alert.alert('¡Propuesta enviada!', `Tu oferta fue enviada a ${receptor?.alias}.`, [
+      Alert.alert('¡Propuesta enviada!', `@${alias} recibió tu propuesta de intercambio.`, [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (e: unknown) {
@@ -71,45 +65,82 @@ export default function ProponerScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.subtitle}>
-        Propuesta para <Text style={styles.alias}>{receptor?.alias ?? '...'}</Text>
-      </Text>
+      {/* Título */}
+      <Text style={styles.title}>Propuesta de intercambio</Text>
+      <Text style={styles.subtitle}>con <Text style={styles.aliasText}>@{alias ?? '...'}</Text></Text>
 
-      {ellosTienen.length > 0 && (
-        <View style={styles.hint}>
-          <Text style={styles.hintLabel}>Ellos tienen (sugerido):</Text>
-          <Text style={styles.hintNumbers}>{arrayToDisplayString(ellosTienen)}</Text>
+      {/* Flecha central */}
+      <View style={styles.arrowRow}>
+        <View style={styles.arrowLine} />
+        <View style={styles.arrowIcon}>
+          <Ionicons name="swap-horizontal" size={20} color="#7C3AED" />
+        </View>
+        <View style={styles.arrowLine} />
+      </View>
+
+      {/* Panel: Vos recibís */}
+      <View style={[styles.panel, styles.panelBlue]}>
+        <View style={styles.panelHeader}>
+          <Ionicons name="arrow-down-circle" size={18} color="#3B82F6" />
+          <View>
+            <Text style={styles.panelDirection}>Vos recibís de @{alias ?? '...'}</Text>
+            <Text style={styles.panelHint}>Figuritas que @{alias ?? '...'} tiene y vos buscás</Text>
+          </View>
+          <View style={[styles.countBadge, { backgroundColor: '#1d4ed822' }]}>
+            <Text style={[styles.countText, { color: '#3B82F6' }]}>{reciboCount}</Text>
+          </View>
+        </View>
+        <TextInput
+          style={[styles.input, { borderColor: '#3B82F644' }]}
+          value={recibo}
+          onChangeText={setRecibo}
+          placeholder="Ej: 12, 45, 102"
+          placeholderTextColor="#4B5563"
+          keyboardType="numbers-and-punctuation"
+          multiline
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      </View>
+
+      {/* Panel: Vos das */}
+      <View style={[styles.panel, styles.panelAmber]}>
+        <View style={styles.panelHeader}>
+          <Ionicons name="arrow-up-circle" size={18} color="#F59E0B" />
+          <View>
+            <Text style={styles.panelDirection}>Vos le das a @{alias ?? '...'}</Text>
+            <Text style={styles.panelHint}>Tus repetidas que @{alias ?? '...'} necesita</Text>
+          </View>
+          <View style={[styles.countBadge, { backgroundColor: '#92400e22' }]}>
+            <Text style={[styles.countText, { color: '#F59E0B' }]}>{doyCount}</Text>
+          </View>
+        </View>
+        <TextInput
+          style={[styles.input, { borderColor: '#F59E0B44' }]}
+          value={doy}
+          onChangeText={setDoy}
+          placeholder="Ej: 7, 33, 88"
+          placeholderTextColor="#4B5563"
+          keyboardType="numbers-and-punctuation"
+          multiline
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      </View>
+
+      {/* Resumen */}
+      {(reciboCount > 0 || doyCount > 0) && (
+        <View style={styles.resumen}>
+          <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
+          <Text style={styles.resumenText}>
+            {reciboCount > 0 && doyCount > 0
+              ? `Recibís ${reciboCount} figurita${reciboCount !== 1 ? 's' : ''} y das ${doyCount}`
+              : reciboCount > 0
+              ? `Recibís ${reciboCount} figurita${reciboCount !== 1 ? 's' : ''} sin dar nada`
+              : `Dás ${doyCount} figurita${doyCount !== 1 ? 's' : ''} sin recibir nada`}
+          </Text>
         </View>
       )}
-
-      <Text style={styles.label}>Figuritas que querés recibir</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ej: 12, 45, 102"
-        placeholderTextColor="#6B7280"
-        keyboardType="numbers-and-punctuation"
-        multiline
-        value={pedidos}
-        onChangeText={setPedidos}
-      />
-
-      {yoTengo.length > 0 && (
-        <View style={styles.hint}>
-          <Text style={styles.hintLabel}>Ellos buscan (sugerido):</Text>
-          <Text style={styles.hintNumbers}>{arrayToDisplayString(yoTengo)}</Text>
-        </View>
-      )}
-
-      <Text style={styles.label}>Figuritas que ofrecés dar</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ej: 7, 33, 88"
-        placeholderTextColor="#6B7280"
-        keyboardType="numbers-and-punctuation"
-        multiline
-        value={ofrecidos}
-        onChangeText={setOfrecidos}
-      />
 
       <AppButton title="Enviar propuesta" onPress={handleEnviar} loading={submitting} />
     </ScrollView>
@@ -118,27 +149,48 @@ export default function ProponerScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111827' },
-  content: { padding: 20, paddingBottom: 40 },
-  subtitle: { fontSize: 16, color: '#9CA3AF', marginBottom: 20 },
-  alias: { color: '#7C3AED', fontWeight: '700' },
-  hint: {
+  content: { padding: 20, paddingBottom: 40, gap: 16 },
+  title: { fontSize: 22, fontWeight: '800', color: '#F9FAFB' },
+  subtitle: { fontSize: 15, color: '#9CA3AF', marginTop: -8 },
+  aliasText: { color: '#7C3AED', fontWeight: '700' },
+  arrowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  arrowLine: { flex: 1, height: 1, backgroundColor: '#374151' },
+  arrowIcon: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#2e1065', alignItems: 'center', justifyContent: 'center',
+  },
+  panel: {
+    backgroundColor: '#1F2937',
+    borderRadius: 16,
+    padding: 16,
+    gap: 10,
+    borderWidth: 1,
+  },
+  panelBlue: { borderColor: '#3B82F622' },
+  panelAmber: { borderColor: '#F59E0B22' },
+  panelHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  panelDirection: { fontSize: 14, fontWeight: '700', color: '#F9FAFB' },
+  panelHint: { fontSize: 11, color: '#6B7280', marginTop: 1 },
+  countBadge: { marginLeft: 'auto', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 12 },
+  countText: { fontSize: 13, fontWeight: '800' },
+  input: {
+    backgroundColor: '#111827',
+    color: '#F9FAFB',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    borderWidth: 1.5,
+    minHeight: 56,
+    lineHeight: 22,
+  },
+  resumen: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: '#1F2937',
     borderRadius: 10,
     padding: 12,
-    marginBottom: 12,
   },
-  hintLabel: { fontSize: 12, color: '#6B7280', marginBottom: 4 },
-  hintNumbers: { fontSize: 13, color: '#9CA3AF', lineHeight: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#F9FAFB', marginBottom: 8, marginTop: 8 },
-  input: {
-    backgroundColor: '#1F2937',
-    color: '#F9FAFB',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: '#374151',
-    marginBottom: 16,
-    minHeight: 60,
-  },
+  resumenText: { fontSize: 13, color: '#9CA3AF', flex: 1 },
 });

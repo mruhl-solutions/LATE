@@ -9,13 +9,14 @@ export function useIntercambios() {
   const [enviadas, setEnviadas] = useState<IntercambioConAlias[]>([]);
   const [negociaciones, setNegociaciones] = useState<IntercambioConAlias[]>([]);
   const [historial, setHistorial] = useState<IntercambioConAlias[]>([]);
+  const [completados, setCompletados] = useState<IntercambioConAlias[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
-    const [recv, sent, neg, hist] = await Promise.all([
+    const [recv, sent, neg, hist, comp] = await Promise.all([
       supabase
         .from('intercambios')
         .select('*, iniciador:profiles!iniciador_id(alias)')
@@ -45,7 +46,17 @@ export function useIntercambios() {
           '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
         )
         .or(`iniciador_id.eq.${user.id},receptor_id.eq.${user.id}`)
-        .in('estado', ['terminado', 'cancelado'])
+        .eq('estado', 'cancelado')
+        .order('updated_at', { ascending: false })
+        .limit(50),
+
+      supabase
+        .from('intercambios')
+        .select(
+          '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
+        )
+        .or(`iniciador_id.eq.${user.id},receptor_id.eq.${user.id}`)
+        .eq('estado', 'terminado')
         .order('updated_at', { ascending: false })
         .limit(50),
     ]);
@@ -54,6 +65,7 @@ export function useIntercambios() {
     setEnviadas((sent.data as IntercambioConAlias[]) ?? []);
     setNegociaciones((neg.data as IntercambioConAlias[]) ?? []);
     setHistorial((hist.data as IntercambioConAlias[]) ?? []);
+    setCompletados((comp.data as IntercambioConAlias[]) ?? []);
     setLoading(false);
   }, [user]);
 
@@ -124,11 +136,23 @@ export function useIntercambios() {
     [fetchAll],
   );
 
+  const eliminarChat = useCallback(
+    async (intercambioId: string) => {
+      const { error } = await supabase
+        .from('mensajes')
+        .delete()
+        .eq('intercambio_id', intercambioId);
+      if (error) throw error;
+    },
+    [],
+  );
+
   return {
     recibidas,
     enviadas,
     negociaciones,
     historial,
+    completados,
     loading,
     fetchAll,
     crearIntercambio,
@@ -136,5 +160,6 @@ export function useIntercambios() {
     confirmar,
     cancelar,
     finalizar,
+    eliminarChat,
   };
 }
