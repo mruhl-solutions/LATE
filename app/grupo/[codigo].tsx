@@ -97,7 +97,7 @@ export default function GrupoScreen() {
     if (!grupo) return;
     try {
       await Share.share({
-        message: `Unite a mi grupo "${grupo.nombre}" en LATE!\n\nCódigo: ${grupo.codigo}\nLink: lateapp://grupo/${grupo.codigo}`,
+        message: `Unite a mi grupo "${grupo.nombre}" en LATE!\n\nCódigo: ${grupo.codigo.toUpperCase()}\nLink: lateapp://grupo/${grupo.codigo}`,
         title: `Grupo ${grupo.nombre}`,
       });
     } catch {
@@ -140,7 +140,7 @@ export default function GrupoScreen() {
             <View style={styles.metaRow}>
               <View style={styles.codigoBadge}>
                 <Ionicons name="key-outline" size={12} color="#7C3AED" />
-                <Text style={styles.codigoText}>{grupo.codigo}</Text>
+                <Text style={styles.codigoText}>{grupo.codigo.toUpperCase()}</Text>
               </View>
               <Text style={styles.miembrosText}>
                 {cantMiembros} miembro{cantMiembros !== 1 ? 's' : ''}
@@ -158,7 +158,7 @@ export default function GrupoScreen() {
           <View style={styles.inviteBox}>
             <Text style={styles.inviteLabel}>Invitá con el código:</Text>
             <Pressable style={styles.inviteCode} onPress={handleCompartir}>
-              <Text style={styles.inviteCodeText}>{grupo.codigo}</Text>
+              <Text style={styles.inviteCodeText}>{grupo.codigo.toUpperCase()}</Text>
               <Ionicons name="copy-outline" size={14} color="#9CA3AF" />
             </Pressable>
           </View>
@@ -193,7 +193,7 @@ export default function GrupoScreen() {
                 }
                 subtitle={
                   cantMiembros <= 1
-                    ? `Compartí el código ${grupo.codigo} para que otros se unan.`
+                    ? `Compartí el código ${grupo.codigo.toUpperCase()} para que otros se unan.`
                     : 'Actualizá tu inventario o esperá que se unan más miembros.'
                 }
                 action={

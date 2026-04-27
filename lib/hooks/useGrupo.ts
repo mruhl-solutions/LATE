@@ -33,10 +33,12 @@ export function useGrupo() {
         .single();
       if (error) throw error;
 
-      await supabase.from('grupo_miembros').insert({
+      // Agregar al creador como miembro
+      const { error: memErr } = await supabase.from('grupo_miembros').insert({
         grupo_id: data.id,
         usuario_id: user.id,
       });
+      if (memErr) throw new Error('Grupo creado pero no se pudo agregar como miembro: ' + memErr.message);
 
       await fetchMisGrupos();
       return data;
@@ -47,18 +49,25 @@ export function useGrupo() {
   const unirseAGrupo = useCallback(
     async (codigo: string): Promise<Grupo> => {
       if (!user) throw new Error('No autenticado');
+
+      // El código se guarda en minúsculas (hex), normalizar siempre
+      const codigoNorm = codigo.trim().toLowerCase();
+
       const { data: grupo, error: gErr } = await supabase
         .from('grupos')
         .select('*')
-        .eq('codigo', codigo)
+        .eq('codigo', codigoNorm)
         .single();
-      if (gErr) throw new Error('Grupo no encontrado');
+      if (gErr || !grupo) throw new Error('Código inválido o grupo no encontrado.');
 
       const { error } = await supabase.from('grupo_miembros').insert({
         grupo_id: grupo.id,
         usuario_id: user.id,
       });
-      if (error && !error.message.includes('duplicate')) throw error;
+      // Ignorar error de duplicado (ya es miembro)
+      if (error && !error.message.toLowerCase().includes('duplicate') && !error.code?.includes('23505')) {
+        throw error;
+      }
 
       await fetchMisGrupos();
       return grupo;

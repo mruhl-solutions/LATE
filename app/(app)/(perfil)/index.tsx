@@ -23,7 +23,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { cleanInventoryString, arrayToDisplayString } from '@/lib/parsers';
 
 export default function PerfilScreen() {
-  const { profile, fetchProfile, updateInventario, updateRadio } = useProfile();
+  const { profile, fetchProfile, updateInventario } = useProfile();
   const { signOut } = useAuth();
   const { misGrupos, fetchMisGrupos, crearGrupo, unirseAGrupo } = useGrupo();
   const { promedioEstrellas } = useCalificacion();
@@ -32,7 +32,6 @@ export default function PerfilScreen() {
 
   const [faltantesStr, setFaltantesStr] = useState('');
   const [repetidasStr, setRepetidasStr] = useState('');
-  const [radioStr, setRadioStr] = useState('');
   const [saving, setSaving] = useState(false);
   const [promedio, setPromedio] = useState<number | null>(null);
 
@@ -56,7 +55,6 @@ export default function PerfilScreen() {
     if (profile) {
       setFaltantesStr(arrayToDisplayString(profile.faltantes));
       setRepetidasStr(arrayToDisplayString(profile.repetidas));
-      setRadioStr(String(profile.radio_km));
     }
   }, [profile]);
 
@@ -72,20 +70,6 @@ export default function PerfilScreen() {
       Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo guardar.');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleGuardarRadio = async () => {
-    const km = parseInt(radioStr, 10);
-    if (isNaN(km) || km < 1 || km > 200) {
-      Alert.alert('Error', 'El radio debe ser entre 1 y 200 km.');
-      return;
-    }
-    try {
-      await updateRadio(km);
-      Alert.alert('Guardado', `Radio actualizado a ${km} km.`);
-    } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo guardar.');
     }
   };
 
@@ -209,22 +193,6 @@ export default function PerfilScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Radio de búsqueda</Text>
-          <InventarioInput
-            label="Kilómetros"
-            value={radioStr}
-            onChangeText={setRadioStr}
-            keyboardType="number-pad"
-            accentColor="#7C3AED"
-          />
-          <AppButton
-            title="Actualizar radio"
-            onPress={handleGuardarRadio}
-            variant="secondary"
-          />
-        </View>
-
-        <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Mis Grupos</Text>
             <View style={styles.grupoHeaderActions}>
@@ -251,7 +219,7 @@ export default function PerfilScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.grupoNombre}>{grupo.nombre}</Text>
-                <Text style={styles.grupoCodigo}>Código: {grupo.codigo}</Text>
+                <Text style={styles.grupoCodigo}>Código: {grupo.codigo.toUpperCase()}</Text>
               </View>
               <Text style={styles.grupoArrow}>›</Text>
             </Pressable>
