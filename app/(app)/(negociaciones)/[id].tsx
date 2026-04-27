@@ -32,14 +32,14 @@ export default function ChatScreen() {
   const { calificar, yaCalifique } = useCalificacion();
 
   const [intercambio, setIntercambio] = useState<IntercambioConAlias | null>(null);
-  const [otroUsuarioId, setOtroUsuarioId] = useState<string | undefined>();
+  const [otroUsuarioId, setOtroUsuarioId] = useState<string>('');
   const [otroAlias, setOtroAlias] = useState('');
   const [texto, setTexto] = useState('');
   const [sending, setSending] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  const { mensajes, loading, enviar } = useChat(id!, otroUsuarioId);
+  const { mensajes, loading, enviar } = useChat(id!);
 
   const cargarIntercambio = async () => {
     const { data } = await supabase
@@ -59,7 +59,7 @@ export default function ChatScreen() {
       ? (data.receptor as { alias: string } | undefined)?.alias ?? 'Chat'
       : (data.iniciador as { alias: string } | undefined)?.alias ?? 'Chat';
 
-    setOtroUsuarioId(otroId);
+    setOtroUsuarioId(otroId ?? '');
     setOtroAlias(alias);
     navigation.setOptions({ title: alias });
 

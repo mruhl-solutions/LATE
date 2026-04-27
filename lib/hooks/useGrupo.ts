@@ -48,7 +48,6 @@ export function useGrupo() {
   const unirseAGrupo = useCallback(
     async (codigo: string): Promise<Grupo> => {
       if (!user) throw new Error('No autenticado');
-
       const codigoNorm = codigo.trim().toLowerCase();
 
       const { data: grupo, error: gErr } = await supabase
@@ -72,31 +71,47 @@ export function useGrupo() {
     [user, fetchMisGrupos],
   );
 
-  // Reemplaza el RPC buscar_matches_grupo (que falla por schema cache)
-  // con una query directa + cálculo de intersecciones en JS.
+  const salirDeGrupo = useCallback(
+    async (grupoId: string) => {
+      if (!user) return;
+      const { error } = await supabase
+        .from('grupo_miembros')
+        .delete()
+        .eq('grupo_id', grupoId)
+        .eq('usuario_id', user.id);
+      if (error) throw error;
+      await fetchMisGrupos();
+    },
+    [user, fetchMisGrupos],
+  );
+
+  const eliminarGrupo = useCallback(
+    async (grupoId: string) => {
+      if (!user) return;
+      const { error } = await supabase
+        .from('grupos')
+        .delete()
+        .eq('id', grupoId)
+        .eq('creador_id', user.id);
+      if (error) throw error;
+      await fetchMisGrupos();
+    },
+    [user, fetchMisGrupos],
+  );
+
   const buscarMatchesGrupo = useCallback(
     async (grupoId: string): Promise<MatchResult[]> => {
       if (!user) return [];
 
       const [myProfileRes, membersRes] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('faltantes, repetidas')
-          .eq('id', user.id)
-          .single(),
-        supabase
-          .from('grupo_miembros')
-          .select('usuario_id')
-          .eq('grupo_id', grupoId)
-          .neq('usuario_id', user.id),
+        supabase.from('profiles').select('faltantes, repetidas').eq('id', user.id).single(),
+        supabase.from('grupo_miembros').select('usuario_id').eq('grupo_id', grupoId).neq('usuario_id', user.id),
       ]);
 
       const myProfile = myProfileRes.data;
       if (!myProfile) return [];
 
-      const memberIds = (membersRes.data ?? []).map(
-        (r: { usuario_id: string }) => r.usuario_id,
-      );
+      const memberIds = (membersRes.data ?? []).map((r: { usuario_id: string }) => r.usuario_id);
       if (memberIds.length === 0) return [];
 
       const { data: memberProfiles } = await supabase
@@ -109,29 +124,34 @@ export function useGrupo() {
       const myFaltantesSet = new Set<number>(myProfile.faltantes);
       const myRepetidasSet = new Set<number>(myProfile.repetidas);
 
-      const results: MatchResult[] = memberProfiles
+      return memberProfiles
         .map((p: { id: string; alias: string; faltantes: number[]; repetidas: number[] }) => {
           const ellos_tienen_yo_busco = p.repetidas.filter((n) => myFaltantesSet.has(n));
           const yo_tengo_ellos_buscan = p.faltantes.filter((n) => myRepetidasSet.has(n));
-          const total = ellos_tienen_yo_busco.length + yo_tengo_ellos_buscan.length;
           return {
             usuario_id: p.id,
             alias: p.alias,
             distancia_km: undefined,
             ellos_tienen_yo_busco,
             yo_tengo_ellos_buscan,
-            total_coincidencias: total,
-            es_bidireccional:
-              ellos_tienen_yo_busco.length > 0 && yo_tengo_ellos_buscan.length > 0,
+            total_coincidencias: ellos_tienen_yo_busco.length + yo_tengo_ellos_buscan.length,
+            es_bidireccional: ellos_tienen_yo_busco.length > 0 && yo_tengo_ellos_buscan.length > 0,
           };
         })
         .filter((m) => m.total_coincidencias > 0)
         .sort((a, b) => b.total_coincidencias - a.total_coincidencias);
-
-      return results;
     },
     [user],
   );
 
-  return { misGrupos, loading, fetchMisGrupos, crearGrupo, unirseAGrupo, buscarMatchesGrupo };
+  return {
+    misGrupos,
+    loading,
+    fetchMisGrupos,
+    crearGrupo,
+    unirseAGrupo,
+    salirDeGrupo,
+    eliminarGrupo,
+    buscarMatchesGrupo,
+  };
 }

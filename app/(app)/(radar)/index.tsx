@@ -9,32 +9,77 @@ import {
   TextInput,
   Pressable,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRadar } from '@/lib/hooks/useRadar';
 import { useProfile } from '@/lib/hooks/useProfile';
+import { useGrupo } from '@/lib/hooks/useGrupo';
 import { UserMatchCard } from '@/components/radar/UserMatchCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import type { MatchResult } from '@/types/app';
+import type { Grupo, MatchResult } from '@/types/app';
+
+type Tab = 'global' | 'grupos';
 
 export default function RadarScreen() {
   const { matches, loading, error, inventarioVacio, buscarMatches } = useRadar();
   const { profile, fetchProfile, updateRadio } = useProfile();
+  const { misGrupos, fetchMisGrupos, buscarMatchesGrupo } = useGrupo();
 
+  const [tab, setTab] = useState<Tab>('global');
   const [radioModal, setRadioModal] = useState(false);
   const [radioInput, setRadioInput] = useState('');
   const [savingRadio, setSavingRadio] = useState(false);
 
+  // Estado para la tab Grupos
+  const [selectedGrupo, setSelectedGrupo] = useState<Grupo | null>(null);
+  const [groupMatches, setGroupMatches] = useState<MatchResult[]>([]);
+  const [loadingGroup, setLoadingGroup] = useState(false);
+
   useEffect(() => {
     fetchProfile();
     buscarMatches();
+    fetchMisGrupos();
   }, []);
 
   useEffect(() => {
     if (profile) setRadioInput(String(profile.radio_km));
   }, [profile]);
+
+  // Auto-seleccionar el primer grupo al cargar
+  useEffect(() => {
+    if (misGrupos.length > 0 && !selectedGrupo) {
+      setSelectedGrupo(misGrupos[0]);
+    }
+  }, [misGrupos]);
+
+  // Cargar matches cuando cambia el grupo seleccionado
+  useEffect(() => {
+    if (selectedGrupo && tab === 'grupos') {
+      fetchGroupMatches(selectedGrupo.id);
+    }
+  }, [selectedGrupo, tab]);
+
+  const fetchGroupMatches = useCallback(async (grupoId: string) => {
+    setLoadingGroup(true);
+    try {
+      const data = await buscarMatchesGrupo(grupoId);
+      setGroupMatches(data);
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudieron cargar las coincidencias.');
+    } finally {
+      setLoadingGroup(false);
+    }
+  }, [buscarMatchesGrupo]);
+
+  const handleTabChange = (newTab: Tab) => {
+    setTab(newTab);
+    if (newTab === 'grupos' && selectedGrupo) {
+      fetchGroupMatches(selectedGrupo.id);
+    }
+  };
 
   const handleGuardarRadio = async () => {
     const km = parseInt(radioInput, 10);
@@ -54,28 +99,28 @@ export default function RadarScreen() {
     }
   };
 
-  const renderItem = useCallback(
+  const renderGlobalItem = useCallback(
+    ({ item }: { item: MatchResult }) => <UserMatchCard match={item} />,
+    [],
+  );
+
+  const renderGroupItem = useCallback(
     ({ item }: { item: MatchResult }) => <UserMatchCard match={item} />,
     [],
   );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Modal de radio */}
+      {/* Modal radio */}
       <Modal visible={radioModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Radio de búsqueda</Text>
-            <Text style={styles.modalSubtitle}>
-              Cuántos km alrededor tuyo busca el radar (1–200)
-            </Text>
+            <Text style={styles.modalSubtitle}>Cuántos km alrededor tuyo busca el radar (1–200)</Text>
             <View style={styles.radioRow}>
               <Pressable
                 style={styles.radioStepBtn}
-                onPress={() => {
-                  const v = parseInt(radioInput, 10);
-                  if (!isNaN(v) && v > 1) setRadioInput(String(v - 1));
-                }}
+                onPress={() => { const v = parseInt(radioInput, 10); if (!isNaN(v) && v > 1) setRadioInput(String(v - 1)); }}
               >
                 <Ionicons name="remove" size={20} color="#F9FAFB" />
               </Pressable>
@@ -89,93 +134,150 @@ export default function RadarScreen() {
               />
               <Pressable
                 style={styles.radioStepBtn}
-                onPress={() => {
-                  const v = parseInt(radioInput, 10);
-                  if (!isNaN(v) && v < 200) setRadioInput(String(v + 1));
-                }}
+                onPress={() => { const v = parseInt(radioInput, 10); if (!isNaN(v) && v < 200) setRadioInput(String(v + 1)); }}
               >
                 <Ionicons name="add" size={20} color="#F9FAFB" />
               </Pressable>
               <Text style={styles.kmLabel}>km</Text>
             </View>
-            <View style={styles.modalActions}>
-              <Pressable
-                style={[styles.modalBtn, savingRadio && { opacity: 0.5 }]}
-                onPress={handleGuardarRadio}
-                disabled={savingRadio}
-              >
-                <Text style={styles.modalBtnText}>Aplicar y buscar</Text>
-              </Pressable>
-              <Pressable onPress={() => setRadioModal(false)} style={styles.modalCancel}>
-                <Text style={styles.modalCancelText}>Cancelar</Text>
-              </Pressable>
-            </View>
+            <Pressable style={[styles.modalBtn, savingRadio && { opacity: 0.5 }]} onPress={handleGuardarRadio} disabled={savingRadio}>
+              <Text style={styles.modalBtnText}>Aplicar y buscar</Text>
+            </Pressable>
+            <Pressable onPress={() => setRadioModal(false)} style={styles.modalCancel}>
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
 
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Radar</Text>
-        <View style={styles.headerRight}>
-          {matches.length > 0 && (
-            <Text style={styles.count}>
-              {matches.length} match{matches.length !== 1 ? 'es' : ''}
-            </Text>
-          )}
+        {tab === 'global' && (
           <Pressable style={styles.radioPill} onPress={() => setRadioModal(true)}>
             <Ionicons name="navigate-circle-outline" size={14} color="#7C3AED" />
             <Text style={styles.radioPillText}>{profile?.radio_km ?? '…'} km</Text>
             <Ionicons name="chevron-down" size={12} color="#6B7280" />
           </Pressable>
-        </View>
+        )}
       </View>
 
-      {error ? (
-        <ScrollView
-          contentContainerStyle={styles.centered}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={buscarMatches} />}
+      {/* Tab bar */}
+      <View style={styles.tabs}>
+        <Pressable
+          style={[styles.tab, tab === 'global' && styles.tabActive]}
+          onPress={() => handleTabChange('global')}
         >
-          <EmptyState
-            icon="warning-outline"
-            title="Error de ubicación"
-            subtitle={error}
-            action={{ label: 'Reintentar', onPress: buscarMatches }}
-          />
-        </ScrollView>
-      ) : inventarioVacio ? (
-        <ScrollView
-          contentContainerStyle={styles.centered}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={buscarMatches} />}
+          <Ionicons name="globe-outline" size={14} color={tab === 'global' ? '#fff' : '#6B7280'} />
+          <Text style={[styles.tabText, tab === 'global' && styles.tabTextActive]}>
+            Global{matches.length > 0 ? ` (${matches.length})` : ''}
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tab, tab === 'grupos' && styles.tabActive]}
+          onPress={() => handleTabChange('grupos')}
         >
-          <EmptyState
-            icon="albums-outline"
-            title="Tu inventario está vacío"
-            subtitle="Andá a Perfil, cargá tus figuritas faltantes y repetidas, y volvé al radar."
-            action={{ label: 'Buscar de nuevo', onPress: buscarMatches }}
+          <Ionicons name="people-outline" size={14} color={tab === 'grupos' ? '#fff' : '#6B7280'} />
+          <Text style={[styles.tabText, tab === 'grupos' && styles.tabTextActive]}>
+            Grupos{misGrupos.length > 0 ? ` (${misGrupos.length})` : ''}
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* ── Tab Global ── */}
+      {tab === 'global' && (
+        error ? (
+          <ScrollView contentContainerStyle={styles.centered} refreshControl={<RefreshControl refreshing={loading} onRefresh={buscarMatches} />}>
+            <EmptyState icon="warning-outline" title="Error de ubicación" subtitle={error} action={{ label: 'Reintentar', onPress: buscarMatches }} />
+          </ScrollView>
+        ) : inventarioVacio ? (
+          <ScrollView contentContainerStyle={styles.centered} refreshControl={<RefreshControl refreshing={loading} onRefresh={buscarMatches} />}>
+            <EmptyState icon="albums-outline" title="Tu inventario está vacío" subtitle="Andá a Perfil, cargá tus figuritas faltantes y repetidas, y volvé al radar." action={{ label: 'Buscar de nuevo', onPress: buscarMatches }} />
+          </ScrollView>
+        ) : (
+          <FlashList
+            data={matches}
+            renderItem={renderGlobalItem}
+            keyExtractor={(item) => item.usuario_id}
+            estimatedItemSize={130}
+            contentContainerStyle={styles.list}
+            refreshControl={<RefreshControl refreshing={loading} onRefresh={buscarMatches} />}
+            ListEmptyComponent={
+              !loading ? (
+                <EmptyState
+                  icon="radio-outline"
+                  title="Sin matches cerca"
+                  subtitle={'Necesitás figuritas COMPLEMENTARIAS para matchear:\nlo que vos repetiste debe coincidir con lo que otro busca.'}
+                  action={{ label: 'Buscar de nuevo', onPress: buscarMatches }}
+                />
+              ) : null
+            }
           />
-        </ScrollView>
-      ) : (
-        <FlashList
-          data={matches}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.usuario_id}
-          estimatedItemSize={130}
-          contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={buscarMatches} />}
-          ListEmptyComponent={
-            !loading ? (
-              <EmptyState
-                icon="radio-outline"
-                title="Sin matches cerca"
-                subtitle={
-                  'Necesitás figuritas COMPLEMENTARIAS para matchear:\n' +
-                  'lo que vos repetiste debe coincidir con lo que otro busca.'
+        )
+      )}
+
+      {/* ── Tab Grupos ── */}
+      {tab === 'grupos' && (
+        misGrupos.length === 0 ? (
+          <ScrollView contentContainerStyle={styles.centered} refreshControl={<RefreshControl refreshing={false} onRefresh={fetchMisGrupos} />}>
+            <EmptyState
+              icon="people-outline"
+              title="No pertenecés a ningún grupo"
+              subtitle="Creá o unite a un grupo desde tu Perfil para ver las coincidencias acá."
+            />
+          </ScrollView>
+        ) : (
+          <View style={styles.flex}>
+            {/* Selector de grupo */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.groupPills}>
+              {misGrupos.map((g) => {
+                const isSelected = g.id === selectedGrupo?.id;
+                return (
+                  <Pressable
+                    key={g.id}
+                    style={[styles.groupPill, isSelected && styles.groupPillActive]}
+                    onPress={() => {
+                      setSelectedGrupo(g);
+                      fetchGroupMatches(g.id);
+                    }}
+                  >
+                    <Text style={[styles.groupPillText, isSelected && styles.groupPillTextActive]}>
+                      {g.nombre}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            {/* Matches del grupo */}
+            {loadingGroup ? (
+              <View style={styles.centered}>
+                <ActivityIndicator color="#7C3AED" size="large" />
+              </View>
+            ) : (
+              <FlashList
+                data={groupMatches}
+                renderItem={renderGroupItem}
+                keyExtractor={(item) => item.usuario_id}
+                estimatedItemSize={130}
+                contentContainerStyle={styles.list}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={loadingGroup}
+                    onRefresh={() => selectedGrupo && fetchGroupMatches(selectedGrupo.id)}
+                  />
                 }
-                action={{ label: 'Buscar de nuevo', onPress: buscarMatches }}
+                ListEmptyComponent={
+                  <EmptyState
+                    icon="swap-horizontal-outline"
+                    title="Sin coincidencias en este grupo"
+                    subtitle="Actualizá tu inventario o esperá que se unan más miembros con figuritas complementarias."
+                  />
+                }
               />
-            ) : null
-          }
-        />
+            )}
+          </View>
+        )
       )}
     </SafeAreaView>
   );
@@ -183,16 +285,16 @@ export default function RadarScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111827' },
+  flex: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   title: { fontSize: 28, fontWeight: '800', color: '#F9FAFB' },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  count: { fontSize: 13, color: '#6B7280' },
   radioPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -203,59 +305,51 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   radioPillText: { fontSize: 13, fontWeight: '700', color: '#A78BFA' },
+  tabs: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginBottom: 4,
+    backgroundColor: '#1F2937',
+    borderRadius: 12,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 9,
+  },
+  tabActive: { backgroundColor: '#7C3AED' },
+  tabText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
+  tabTextActive: { color: '#fff' },
+  // Group pills
+  groupPills: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
+  groupPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#1F2937',
+    borderWidth: 1,
+    borderColor: '#374151',
+  },
+  groupPillActive: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
+  groupPillText: { fontSize: 13, fontWeight: '600', color: '#9CA3AF' },
+  groupPillTextActive: { color: '#fff' },
   list: { padding: 16 },
   centered: { flex: 1, justifyContent: 'center', padding: 20 },
   // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modalCard: {
-    backgroundColor: '#1F2937',
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    gap: 14,
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalCard: { backgroundColor: '#1F2937', borderRadius: 20, padding: 24, width: '100%', gap: 14 },
   modalTitle: { fontSize: 18, fontWeight: '800', color: '#F9FAFB' },
   modalSubtitle: { fontSize: 13, color: '#9CA3AF', lineHeight: 18 },
-  radioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    justifyContent: 'center',
-  },
-  radioStepBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#374151',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioInput: {
-    width: 72,
-    backgroundColor: '#111827',
-    color: '#F9FAFB',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#7C3AED55',
-    fontSize: 26,
-    fontWeight: '800',
-    textAlign: 'center',
-    paddingVertical: 8,
-  },
+  radioRow: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' },
+  radioStepBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#374151', alignItems: 'center', justifyContent: 'center' },
+  radioInput: { width: 72, backgroundColor: '#111827', color: '#F9FAFB', borderRadius: 10, borderWidth: 1, borderColor: '#7C3AED55', fontSize: 26, fontWeight: '800', textAlign: 'center', paddingVertical: 8 },
   kmLabel: { fontSize: 16, color: '#9CA3AF', fontWeight: '600' },
-  modalActions: { gap: 4 },
-  modalBtn: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: 'center',
-  },
+  modalBtn: { backgroundColor: '#7C3AED', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
   modalBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   modalCancel: { alignItems: 'center', paddingVertical: 10 },
   modalCancelText: { color: '#6B7280', fontSize: 14 },
