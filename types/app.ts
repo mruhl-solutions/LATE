@@ -21,3 +21,12 @@ export interface IntercambioConAlias extends Intercambio {
   iniciador?: { alias: string };
   receptor?: { alias: string };
 }
+
+export interface Calificacion {
+  id: string;
+  intercambio_id: string;
+  calificador_id: string;
+  calificado_id: string;
+  estrellas: number;
+  created_at: string;
+}

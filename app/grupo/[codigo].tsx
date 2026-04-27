@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, ActivityIndicator, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  RefreshControl,
+  Pressable,
+  Share,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/store/authStore';
@@ -20,6 +30,7 @@ export default function GrupoScreen() {
   const [grupo, setGrupo] = useState<Grupo | null>(null);
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [esMiembro, setEsMiembro] = useState(false);
+  const [cantMiembros, setCantMiembros] = useState(0);
   const [loadingGrupo, setLoadingGrupo] = useState(true);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -34,13 +45,20 @@ export default function GrupoScreen() {
       .then(async ({ data }) => {
         setGrupo(data);
         if (data) {
-          const { data: memData } = await supabase
-            .from('grupo_miembros')
-            .select('usuario_id')
-            .eq('grupo_id', data.id)
-            .eq('usuario_id', user.id)
-            .maybeSingle();
-          setEsMiembro(!!memData);
+          const [memCheck, countData] = await Promise.all([
+            supabase
+              .from('grupo_miembros')
+              .select('usuario_id')
+              .eq('grupo_id', data.id)
+              .eq('usuario_id', user.id)
+              .maybeSingle(),
+            supabase
+              .from('grupo_miembros')
+              .select('usuario_id', { count: 'exact', head: true })
+              .eq('grupo_id', data.id),
+          ]);
+          setEsMiembro(!!memCheck.data);
+          setCantMiembros(countData.count ?? 0);
         }
         setLoadingGrupo(false);
       });
@@ -67,10 +85,23 @@ export default function GrupoScreen() {
     try {
       await unirseAGrupo(codigo);
       setEsMiembro(true);
+      setCantMiembros((prev) => prev + 1);
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo unir al grupo.');
     } finally {
       setJoining(false);
+    }
+  };
+
+  const handleCompartir = async () => {
+    if (!grupo) return;
+    try {
+      await Share.share({
+        message: `Unite a mi grupo "${grupo.nombre}" en LATE!\n\nCódigo: ${grupo.codigo}\nLink: lateapp://grupo/${grupo.codigo}`,
+        title: `Grupo ${grupo.nombre}`,
+      });
+    } catch {
+      // usuario canceló el share
     }
   };
 
@@ -103,8 +134,35 @@ export default function GrupoScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>{grupo.nombre}</Text>
-        <Text style={styles.codigo}>Código: {grupo.codigo}</Text>
+        <View style={styles.headerTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title}>{grupo.nombre}</Text>
+            <View style={styles.metaRow}>
+              <View style={styles.codigoBadge}>
+                <Ionicons name="key-outline" size={12} color="#7C3AED" />
+                <Text style={styles.codigoText}>{grupo.codigo}</Text>
+              </View>
+              <Text style={styles.miembrosText}>
+                {cantMiembros} miembro{cantMiembros !== 1 ? 's' : ''}
+              </Text>
+            </View>
+          </View>
+          {esMiembro && (
+            <Pressable style={styles.shareBtn} onPress={handleCompartir}>
+              <Ionicons name="share-social-outline" size={20} color="#7C3AED" />
+            </Pressable>
+          )}
+        </View>
+
+        {esMiembro && (
+          <View style={styles.inviteBox}>
+            <Text style={styles.inviteLabel}>Invitá con el código:</Text>
+            <Pressable style={styles.inviteCode} onPress={handleCompartir}>
+              <Text style={styles.inviteCodeText}>{grupo.codigo}</Text>
+              <Ionicons name="copy-outline" size={14} color="#9CA3AF" />
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {!esMiembro ? (
@@ -128,8 +186,21 @@ export default function GrupoScreen() {
             !loadingMatches ? (
               <EmptyState
                 icon="people-outline"
-                title="Sin coincidencias en el grupo"
-                subtitle="Actualizá tu inventario o esperá que se unan más miembros."
+                title={
+                  cantMiembros <= 1
+                    ? 'Sos el único miembro'
+                    : 'Sin coincidencias en el grupo'
+                }
+                subtitle={
+                  cantMiembros <= 1
+                    ? `Compartí el código ${grupo.codigo} para que otros se unan.`
+                    : 'Actualizá tu inventario o esperá que se unan más miembros.'
+                }
+                action={
+                  cantMiembros <= 1
+                    ? { label: 'Compartir grupo', onPress: handleCompartir }
+                    : undefined
+                }
               />
             ) : null
           }
@@ -142,9 +213,54 @@ export default function GrupoScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111827' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { padding: 20, borderBottomWidth: 1, borderBottomColor: '#374151' },
-  title: { fontSize: 24, fontWeight: '800', color: '#F9FAFB' },
-  codigo: { fontSize: 13, color: '#6B7280', marginTop: 4 },
+  header: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#374151',
+  },
+  headerTop: { flexDirection: 'row', alignItems: 'flex-start' },
+  title: { fontSize: 22, fontWeight: '800', color: '#F9FAFB' },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
+  codigoBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#2e1065',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  codigoText: { fontSize: 12, fontWeight: '700', color: '#7C3AED', letterSpacing: 1 },
+  miembrosText: { fontSize: 12, color: '#6B7280' },
+  shareBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2e1065',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
+    backgroundColor: '#111827',
+    borderRadius: 10,
+    padding: 10,
+  },
+  inviteLabel: { fontSize: 12, color: '#6B7280' },
+  inviteCode: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1F2937',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  inviteCodeText: { fontSize: 16, fontWeight: '800', color: '#F9FAFB', letterSpacing: 3 },
   joinBox: { padding: 24, gap: 16 },
   joinText: { fontSize: 15, color: '#9CA3AF', lineHeight: 22 },
   list: { padding: 16 },

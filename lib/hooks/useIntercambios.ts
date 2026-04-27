@@ -8,13 +8,14 @@ export function useIntercambios() {
   const [recibidas, setRecibidas] = useState<IntercambioConAlias[]>([]);
   const [enviadas, setEnviadas] = useState<IntercambioConAlias[]>([]);
   const [negociaciones, setNegociaciones] = useState<IntercambioConAlias[]>([]);
+  const [historial, setHistorial] = useState<IntercambioConAlias[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
-    const [recv, sent, neg] = await Promise.all([
+    const [recv, sent, neg, hist] = await Promise.all([
       supabase
         .from('intercambios')
         .select('*, iniciador:profiles!iniciador_id(alias)')
@@ -37,11 +38,22 @@ export function useIntercambios() {
         .or(`iniciador_id.eq.${user.id},receptor_id.eq.${user.id}`)
         .in('estado', ['en_curso', 'aceptado'])
         .order('updated_at', { ascending: false }),
+
+      supabase
+        .from('intercambios')
+        .select(
+          '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
+        )
+        .or(`iniciador_id.eq.${user.id},receptor_id.eq.${user.id}`)
+        .in('estado', ['terminado', 'cancelado'])
+        .order('updated_at', { ascending: false })
+        .limit(50),
     ]);
 
     setRecibidas((recv.data as IntercambioConAlias[]) ?? []);
     setEnviadas((sent.data as IntercambioConAlias[]) ?? []);
     setNegociaciones((neg.data as IntercambioConAlias[]) ?? []);
+    setHistorial((hist.data as IntercambioConAlias[]) ?? []);
     setLoading(false);
   }, [user]);
 
@@ -116,6 +128,7 @@ export function useIntercambios() {
     recibidas,
     enviadas,
     negociaciones,
+    historial,
     loading,
     fetchAll,
     crearIntercambio,

@@ -17,7 +17,9 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useChat } from '@/lib/hooks/useChat';
 import { useIntercambios } from '@/lib/hooks/useIntercambios';
+import { useCalificacion } from '@/lib/hooks/useCalificacion';
 import { ChatBubble } from '@/components/negociaciones/ChatBubble';
+import { CalificacionModal } from '@/components/negociaciones/CalificacionModal';
 import { EstadoBadge } from '@/components/intercambios/EstadoBadge';
 import { arrayToDisplayString } from '@/lib/parsers';
 import type { IntercambioConAlias } from '@/types/app';
@@ -26,13 +28,18 @@ export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
   const user = useAuthStore((s) => s.user);
-  const { mensajes, loading, enviar } = useChat(id!);
   const { confirmar, cancelar, finalizar } = useIntercambios();
+  const { calificar, yaCalifique } = useCalificacion();
 
   const [intercambio, setIntercambio] = useState<IntercambioConAlias | null>(null);
+  const [otroUsuarioId, setOtroUsuarioId] = useState<string | undefined>();
+  const [otroAlias, setOtroAlias] = useState('');
   const [texto, setTexto] = useState('');
   const [sending, setSending] = useState(false);
+  const [showRating, setShowRating] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  const { mensajes, loading, enviar } = useChat(id!, otroUsuarioId);
 
   const cargarIntercambio = async () => {
     const { data } = await supabase
@@ -42,12 +49,25 @@ export default function ChatScreen() {
       )
       .eq('id', id)
       .single();
+
+    if (!data) return;
     setIntercambio(data as IntercambioConAlias);
-    const contraparte =
-      data?.iniciador_id === user?.id
-        ? (data?.receptor as { alias: string } | undefined)?.alias
-        : (data?.iniciador as { alias: string } | undefined)?.alias;
-    navigation.setOptions({ title: contraparte ?? 'Chat' });
+
+    const esIniciador = data.iniciador_id === user?.id;
+    const otroId = esIniciador ? data.receptor_id : data.iniciador_id;
+    const alias = esIniciador
+      ? (data.receptor as { alias: string } | undefined)?.alias ?? 'Chat'
+      : (data.iniciador as { alias: string } | undefined)?.alias ?? 'Chat';
+
+    setOtroUsuarioId(otroId);
+    setOtroAlias(alias);
+    navigation.setOptions({ title: alias });
+
+    // Si terminado, verificar si ya calificó
+    if (data.estado === 'terminado') {
+      const yaCal = await yaCalifique(id!);
+      if (!yaCal) setShowRating(true);
+    }
   };
 
   useEffect(() => {
@@ -79,7 +99,10 @@ export default function ChatScreen() {
           try {
             if (accion === 'confirmar') await confirmar(id!);
             if (accion === 'cancelar') await cancelar(id!);
-            if (accion === 'finalizar') await finalizar(id!);
+            if (accion === 'finalizar') {
+              await finalizar(id!);
+              setShowRating(true);
+            }
             await cargarIntercambio();
           } catch (e: unknown) {
             Alert.alert('Error', e instanceof Error ? e.message : 'Operación fallida.');
@@ -89,109 +112,130 @@ export default function ChatScreen() {
     ]);
   };
 
+  const handleCalificar = async (estrellas: number) => {
+    if (!otroUsuarioId) return;
+    await calificar(id!, otroUsuarioId, estrellas);
+    setShowRating(false);
+  };
+
   if (!intercambio) return <ActivityIndicator style={styles.loader} color="#7C3AED" />;
 
   const terminado = intercambio.estado === 'terminado' || intercambio.estado === 'cancelado';
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
-    >
-      <View style={styles.propuestaBox}>
-        <View style={styles.propuestaRow}>
-          <EstadoBadge estado={intercambio.estado} />
-        </View>
-        <View style={styles.numerosRow}>
-          <View style={styles.numerosCol}>
-            <Text style={styles.numerosLabel}>Pide</Text>
-            <Text style={styles.numeros}>
-              {intercambio.numeros_pedidos.length > 0
-                ? arrayToDisplayString(intercambio.numeros_pedidos)
-                : '—'}
-            </Text>
-          </View>
-          <View style={styles.numerosCol}>
-            <Text style={styles.numerosLabel}>Ofrece</Text>
-            <Text style={styles.numeros}>
-              {intercambio.numeros_ofrecidos.length > 0
-                ? arrayToDisplayString(intercambio.numeros_ofrecidos)
-                : '—'}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <FlatList
-        ref={flatListRef}
-        data={mensajes}
-        keyExtractor={(m) => m.id}
-        renderItem={({ item }) => (
-          <ChatBubble mensaje={item} esMio={item.autor_id === user?.id} />
-        )}
-        contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+    <>
+      <CalificacionModal
+        visible={showRating}
+        alias={otroAlias}
+        onCalificar={handleCalificar}
+        onOmitir={() => setShowRating(false)}
       />
 
-      {!terminado && (
-        <>
-          <View style={styles.acciones}>
-            {intercambio.estado === 'en_curso' && (
-              <Pressable
-                style={styles.btnConfirmar}
-                onPress={() => handleAccion('confirmar')}
-              >
-                <Text style={styles.btnText}>Confirmar trato</Text>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={90}
+      >
+        <View style={styles.propuestaBox}>
+          <View style={styles.propuestaRow}>
+            <EstadoBadge estado={intercambio.estado} />
+            {intercambio.estado === 'terminado' && !showRating && (
+              <Pressable onPress={() => setShowRating(true)} style={styles.calificarBtn}>
+                <Ionicons name="star-outline" size={14} color="#FBBF24" />
+                <Text style={styles.calificarText}>Calificar</Text>
               </Pressable>
             )}
-            {intercambio.estado === 'aceptado' && (
-              <Pressable
-                style={styles.btnFinalizar}
-                onPress={() => handleAccion('finalizar')}
-              >
-                <Text style={styles.btnText}>¡Hecho! Finalizar</Text>
-              </Pressable>
-            )}
-            <Pressable
-              style={styles.btnCancelar}
-              onPress={() => handleAccion('cancelar')}
-            >
-              <Text style={styles.btnCancelarText}>Cancelar</Text>
-            </Pressable>
           </View>
-
-          <View style={styles.inputBar}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Mensaje..."
-              placeholderTextColor="#6B7280"
-              value={texto}
-              onChangeText={setTexto}
-              onSubmitEditing={handleEnviar}
-              returnKeyType="send"
-            />
-            <Pressable
-              style={[styles.sendBtn, (!texto.trim() || sending) && styles.sendBtnDisabled]}
-              onPress={handleEnviar}
-              disabled={!texto.trim() || sending}
-            >
-              <Ionicons name="send" size={20} color="#FFFFFF" />
-            </Pressable>
+          <View style={styles.numerosRow}>
+            <View style={styles.numerosCol}>
+              <Text style={styles.numerosLabel}>Pide</Text>
+              <Text style={styles.numeros}>
+                {intercambio.numeros_pedidos.length > 0
+                  ? arrayToDisplayString(intercambio.numeros_pedidos)
+                  : '—'}
+              </Text>
+            </View>
+            <View style={styles.numerosCol}>
+              <Text style={styles.numerosLabel}>Ofrece</Text>
+              <Text style={styles.numeros}>
+                {intercambio.numeros_ofrecidos.length > 0
+                  ? arrayToDisplayString(intercambio.numeros_ofrecidos)
+                  : '—'}
+              </Text>
+            </View>
           </View>
-        </>
-      )}
-
-      {terminado && (
-        <View style={styles.terminadoBanner}>
-          <Text style={styles.terminadoText}>
-            {intercambio.estado === 'terminado'
-              ? '✅ Intercambio finalizado'
-              : '❌ Intercambio cancelado'}
-          </Text>
         </View>
-      )}
-    </KeyboardAvoidingView>
+
+        <FlatList
+          ref={flatListRef}
+          data={mensajes}
+          keyExtractor={(m) => m.id}
+          renderItem={({ item }) => (
+            <ChatBubble mensaje={item} esMio={item.autor_id === user?.id} />
+          )}
+          contentContainerStyle={styles.messagesList}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        />
+
+        {!terminado && (
+          <>
+            <View style={styles.acciones}>
+              {intercambio.estado === 'en_curso' && (
+                <Pressable
+                  style={styles.btnConfirmar}
+                  onPress={() => handleAccion('confirmar')}
+                >
+                  <Text style={styles.btnText}>Confirmar trato</Text>
+                </Pressable>
+              )}
+              {intercambio.estado === 'aceptado' && (
+                <Pressable
+                  style={styles.btnFinalizar}
+                  onPress={() => handleAccion('finalizar')}
+                >
+                  <Text style={styles.btnText}>¡Hecho! Finalizar</Text>
+                </Pressable>
+              )}
+              <Pressable
+                style={styles.btnCancelar}
+                onPress={() => handleAccion('cancelar')}
+              >
+                <Text style={styles.btnCancelarText}>Cancelar</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.inputBar}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Mensaje..."
+                placeholderTextColor="#6B7280"
+                value={texto}
+                onChangeText={setTexto}
+                onSubmitEditing={handleEnviar}
+                returnKeyType="send"
+              />
+              <Pressable
+                style={[styles.sendBtn, (!texto.trim() || sending) && styles.sendBtnDisabled]}
+                onPress={handleEnviar}
+                disabled={!texto.trim() || sending}
+              >
+                <Ionicons name="send" size={20} color="#FFFFFF" />
+              </Pressable>
+            </View>
+          </>
+        )}
+
+        {terminado && (
+          <View style={styles.terminadoBanner}>
+            <Text style={styles.terminadoText}>
+              {intercambio.estado === 'terminado'
+                ? '✅ Intercambio finalizado · Chat guardado'
+                : '❌ Intercambio cancelado · Chat guardado'}
+            </Text>
+          </View>
+        )}
+      </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -204,7 +248,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#374151',
   },
-  propuestaRow: { flexDirection: 'row', marginBottom: 8 },
+  propuestaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  calificarBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#1a1500',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FBBF2444',
+  },
+  calificarText: { fontSize: 12, color: '#FBBF24', fontWeight: '600' },
   numerosRow: { flexDirection: 'row', gap: 12 },
   numerosCol: { flex: 1 },
   numerosLabel: { fontSize: 11, color: '#6B7280', marginBottom: 2, textTransform: 'uppercase' },
@@ -271,10 +332,10 @@ const styles = StyleSheet.create({
   },
   sendBtnDisabled: { opacity: 0.4 },
   terminadoBanner: {
-    padding: 16,
+    padding: 14,
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#374151',
   },
-  terminadoText: { color: '#9CA3AF', fontSize: 15 },
+  terminadoText: { color: '#6B7280', fontSize: 13 },
 });
