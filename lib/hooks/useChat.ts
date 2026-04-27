@@ -9,48 +9,58 @@ export function useChat(intercambioId: string) {
   const [loading, setLoading] = useState(true);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  const fetchMensajes = useCallback(async () => {
-    setLoading(true);
-    const { data } = await supabase
+  useEffect(() => {
+    let mounted = true;
+
+    supabase
       .from('mensajes')
       .select('*')
       .eq('intercambio_id', intercambioId)
-      .order('created_at', { ascending: true });
-    setMensajes(data ?? []);
-    setLoading(false);
-  }, [intercambioId]);
-
-  useEffect(() => {
-    fetchMensajes();
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        if (mounted) {
+          setMensajes(data ?? []);
+          setLoading(false);
+        }
+      });
 
     channelRef.current = supabase
-      .channel(`chat:${intercambioId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'mensajes',
-          filter: `intercambio_id=eq.${intercambioId}`,
-        },
-        (payload) => setMensajes((prev) => [...prev, payload.new as Mensaje]),
-      )
+      .channel(`chat:${intercambioId}`, { config: { broadcast: { self: false } } })
+      .on('broadcast', { event: 'mensaje' }, ({ payload }) => {
+        setMensajes((prev) => {
+          const msg = payload as Mensaje;
+          return prev.some((m) => m.id === msg.id) ? prev : [...prev, msg];
+        });
+      })
       .subscribe();
 
     return () => {
+      mounted = false;
       channelRef.current?.unsubscribe();
     };
-  }, [intercambioId, fetchMensajes]);
+  }, [intercambioId]);
 
   const enviar = useCallback(
     async (contenido: string) => {
       if (!user || !contenido.trim()) return;
-      const { error } = await supabase.from('mensajes').insert({
-        intercambio_id: intercambioId,
-        autor_id: user.id,
-        contenido: contenido.trim(),
-      });
+      const { data, error } = await supabase
+        .from('mensajes')
+        .insert({
+          intercambio_id: intercambioId,
+          autor_id: user.id,
+          contenido: contenido.trim(),
+        })
+        .select()
+        .single();
       if (error) throw error;
+      if (data) {
+        setMensajes((prev) => [...prev, data as Mensaje]);
+        channelRef.current?.send({
+          type: 'broadcast',
+          event: 'mensaje',
+          payload: data,
+        });
+      }
     },
     [user, intercambioId],
   );

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useRadar } from '@/lib/hooks/useRadar';
 import { useProfile } from '@/lib/hooks/useProfile';
@@ -38,11 +39,13 @@ export default function RadarScreen() {
   const [groupMatches, setGroupMatches] = useState<MatchResult[]>([]);
   const [loadingGroup, setLoadingGroup] = useState(false);
 
-  useEffect(() => {
-    fetchProfile();
-    buscarMatches();
-    fetchMisGrupos();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+      buscarMatches();
+      fetchMisGrupos();
+    }, [fetchProfile, buscarMatches, fetchMisGrupos]),
+  );
 
   useEffect(() => {
     if (profile) setRadioInput(String(profile.radio_km));

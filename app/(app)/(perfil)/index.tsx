@@ -19,6 +19,7 @@ import { useGrupo } from '@/lib/hooks/useGrupo';
 import { useCalificacion } from '@/lib/hooks/useCalificacion';
 import { useAuthStore } from '@/store/authStore';
 import { InventarioInput } from '@/components/perfil/InventarioInput';
+import { AlbumStats } from '@/components/perfil/AlbumStats';
 import { AppButton } from '@/components/ui/AppButton';
 import { cleanInventoryString, arrayToDisplayString } from '@/lib/parsers';
 import type { Grupo } from '@/types/app';
@@ -205,9 +206,29 @@ export default function PerfilScreen() {
 
         {/* Inventario */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mi Inventario</Text>
-          <InventarioInput label="Figuritas que me faltan" value={faltantesStr} onChangeText={setFaltantesStr} count={profile?.faltantes.length ?? 0} accentColor="#3B82F6" />
-          <InventarioInput label="Figuritas repetidas" value={repetidasStr} onChangeText={setRepetidasStr} count={profile?.repetidas.length ?? 0} accentColor="#22C55E" />
+          <Text style={styles.sectionTitle}>Mi Álbum</Text>
+          {profile && (
+            <AlbumStats
+              faltantes={profile.faltantes.length}
+              repetidas={profile.repetidas.length}
+            />
+          )}
+          <InventarioInput
+            label="Me faltan"
+            icon="bookmark-outline"
+            value={faltantesStr}
+            onChangeText={setFaltantesStr}
+            accentColor="#3B82F6"
+            savedCount={profile?.faltantes.length ?? 0}
+          />
+          <InventarioInput
+            label="Tengo repetidas"
+            icon="copy-outline"
+            value={repetidasStr}
+            onChangeText={setRepetidasStr}
+            accentColor="#F59E0B"
+            savedCount={profile?.repetidas.length ?? 0}
+          />
           <AppButton title="Guardar inventario" onPress={handleGuardarInventario} loading={saving} />
         </View>
 
