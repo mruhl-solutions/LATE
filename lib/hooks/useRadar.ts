@@ -28,13 +28,14 @@ export function useRadar() {
         accuracy: Location.Accuracy.Balanced,
       });
 
-      // Actualizar ubicación — capturar error sin cortar el flujo
-      const { error: locErr } = await supabase.rpc('actualizar_ubicacion', {
-        p_usuario_id: user.id,
-        p_lat: loc.coords.latitude,
-        p_lng: loc.coords.longitude,
-      });
-      if (locErr) console.warn('actualizar_ubicacion:', locErr.message);
+      // Actualizar ubicación directamente sin depender del schema cache del RPC
+      const { error: locErr } = await supabase
+        .from('profiles')
+        .update({
+          ubicacion: `SRID=4326;POINT(${loc.coords.longitude} ${loc.coords.latitude})`,
+        })
+        .eq('id', user.id);
+      if (locErr) console.warn('ubicacion update:', locErr.message);
 
       // Verificar si el inventario propio está vacío antes de buscar
       const { data: perfil } = await supabase
