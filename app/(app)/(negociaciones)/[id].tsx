@@ -34,20 +34,24 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    supabase
+  const cargarIntercambio = async () => {
+    const { data } = await supabase
       .from('intercambios')
-      .select('*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)')
+      .select(
+        '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
+      )
       .eq('id', id)
-      .single()
-      .then(({ data }) => {
-        setIntercambio(data as IntercambioConAlias);
-        const contraparte =
-          data?.iniciador_id === user?.id
-            ? (data?.receptor as { alias: string } | undefined)?.alias
-            : (data?.iniciador as { alias: string } | undefined)?.alias;
-        navigation.setOptions({ title: contraparte ?? 'Chat' });
-      });
+      .single();
+    setIntercambio(data as IntercambioConAlias);
+    const contraparte =
+      data?.iniciador_id === user?.id
+        ? (data?.receptor as { alias: string } | undefined)?.alias
+        : (data?.iniciador as { alias: string } | undefined)?.alias;
+    navigation.setOptions({ title: contraparte ?? 'Chat' });
+  };
+
+  useEffect(() => {
+    cargarIntercambio();
   }, [id]);
 
   const handleEnviar = async () => {
@@ -62,12 +66,12 @@ export default function ChatScreen() {
   };
 
   const handleAccion = (accion: 'confirmar' | 'cancelar' | 'finalizar') => {
-    const mensajes = {
+    const mensajesConfirm = {
       confirmar: '¿Confirmar el trato? Los números quedarán reservados.',
       cancelar: '¿Cancelar este intercambio?',
       finalizar: '¿Marcar como realizado? Se actualizarán los inventarios de ambos.',
     };
-    Alert.alert('Confirmar', mensajes[accion], [
+    Alert.alert('Confirmar', mensajesConfirm[accion], [
       { text: 'No', style: 'cancel' },
       {
         text: 'Sí',
@@ -76,12 +80,7 @@ export default function ChatScreen() {
             if (accion === 'confirmar') await confirmar(id!);
             if (accion === 'cancelar') await cancelar(id!);
             if (accion === 'finalizar') await finalizar(id!);
-            const { data } = await supabase
-              .from('intercambios')
-              .select('*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)')
-              .eq('id', id)
-              .single();
-            setIntercambio(data as IntercambioConAlias);
+            await cargarIntercambio();
           } catch (e: unknown) {
             Alert.alert('Error', e instanceof Error ? e.message : 'Operación fallida.');
           }
@@ -90,7 +89,7 @@ export default function ChatScreen() {
     ]);
   };
 
-  if (!intercambio) return <ActivityIndicator style={styles.loader} color="#FF6B35" />;
+  if (!intercambio) return <ActivityIndicator style={styles.loader} color="#7C3AED" />;
 
   const terminado = intercambio.estado === 'terminado' || intercambio.estado === 'cancelado';
 
@@ -100,7 +99,6 @@ export default function ChatScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}
     >
-      {/* Números propuestos */}
       <View style={styles.propuestaBox}>
         <View style={styles.propuestaRow}>
           <EstadoBadge estado={intercambio.estado} />
@@ -125,7 +123,6 @@ export default function ChatScreen() {
         </View>
       </View>
 
-      {/* Mensajes */}
       <FlatList
         ref={flatListRef}
         data={mensajes}
@@ -137,21 +134,29 @@ export default function ChatScreen() {
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
 
-      {/* Acciones y barra de input */}
       {!terminado && (
         <>
           <View style={styles.acciones}>
             {intercambio.estado === 'en_curso' && (
-              <Pressable style={styles.btnConfirmar} onPress={() => handleAccion('confirmar')}>
-                <Text style={styles.btnConfirmarText}>Confirmar trato</Text>
+              <Pressable
+                style={styles.btnConfirmar}
+                onPress={() => handleAccion('confirmar')}
+              >
+                <Text style={styles.btnText}>Confirmar trato</Text>
               </Pressable>
             )}
             {intercambio.estado === 'aceptado' && (
-              <Pressable style={styles.btnFinalizar} onPress={() => handleAccion('finalizar')}>
-                <Text style={styles.btnFinalizarText}>¡Hecho! Finalizar</Text>
+              <Pressable
+                style={styles.btnFinalizar}
+                onPress={() => handleAccion('finalizar')}
+              >
+                <Text style={styles.btnText}>¡Hecho! Finalizar</Text>
               </Pressable>
             )}
-            <Pressable style={styles.btnCancelar} onPress={() => handleAccion('cancelar')}>
+            <Pressable
+              style={styles.btnCancelar}
+              onPress={() => handleAccion('cancelar')}
+            >
               <Text style={styles.btnCancelarText}>Cancelar</Text>
             </Pressable>
           </View>
@@ -160,7 +165,7 @@ export default function ChatScreen() {
             <TextInput
               style={styles.textInput}
               placeholder="Mensaje..."
-              placeholderTextColor="#636366"
+              placeholderTextColor="#6B7280"
               value={texto}
               onChangeText={setTexto}
               onSubmitEditing={handleEnviar}
@@ -191,19 +196,19 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F0F0F' },
+  container: { flex: 1, backgroundColor: '#111827' },
   loader: { flex: 1 },
   propuestaBox: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#1F2937',
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
+    borderBottomColor: '#374151',
   },
   propuestaRow: { flexDirection: 'row', marginBottom: 8 },
   numerosRow: { flexDirection: 'row', gap: 12 },
   numerosCol: { flex: 1 },
-  numerosLabel: { fontSize: 11, color: '#636366', marginBottom: 2, textTransform: 'uppercase' },
-  numeros: { fontSize: 13, color: '#ABABAB', lineHeight: 18 },
+  numerosLabel: { fontSize: 11, color: '#6B7280', marginBottom: 2, textTransform: 'uppercase' },
+  numeros: { fontSize: 13, color: '#9CA3AF', lineHeight: 18 },
   messagesList: { padding: 12, paddingBottom: 8 },
   acciones: {
     flexDirection: 'row',
@@ -211,7 +216,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: '#2C2C2E',
+    borderTopColor: '#374151',
   },
   btnConfirmar: {
     flex: 1,
@@ -220,15 +225,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
   },
-  btnConfirmarText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   btnFinalizar: {
     flex: 1,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#7C3AED',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
   },
-  btnFinalizarText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  btnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   btnCancelar: {
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -245,12 +249,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: '#2C2C2E',
+    borderTopColor: '#374151',
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#1C1C1E',
-    color: '#F5F5F5',
+    backgroundColor: '#1F2937',
+    color: '#F9FAFB',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -261,7 +265,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#7C3AED',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -270,7 +274,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#2C2C2E',
+    borderTopColor: '#374151',
   },
-  terminadoText: { color: '#ABABAB', fontSize: 15 },
+  terminadoText: { color: '#9CA3AF', fontSize: 15 },
 });

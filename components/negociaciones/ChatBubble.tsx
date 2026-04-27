@@ -33,13 +33,13 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   bubbleMio: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#7C3AED',
     borderBottomRightRadius: 4,
   },
   bubbleOtro: {
-    backgroundColor: '#2C2C2E',
+    backgroundColor: '#374151',
     borderBottomLeftRadius: 4,
   },
-  contenido: { fontSize: 15, color: '#F5F5F5', lineHeight: 20 },
+  contenido: { fontSize: 15, color: '#F9FAFB', lineHeight: 20 },
   hora: { fontSize: 10, color: 'rgba(255,255,255,0.6)', marginTop: 3, alignSelf: 'flex-end' },
 });

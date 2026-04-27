@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import type { MatchResult } from '@/types/app';
 
 export default function RadarScreen() {
-  const { matches, loading, error, buscarMatches } = useRadar();
+  const { matches, loading, error, inventarioVacio, buscarMatches } = useRadar();
 
   useEffect(() => {
     buscarMatches();
@@ -24,7 +24,9 @@ export default function RadarScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Radar</Text>
         {matches.length > 0 && (
-          <Text style={styles.count}>{matches.length} match{matches.length !== 1 ? 'es' : ''}</Text>
+          <Text style={styles.count}>
+            {matches.length} match{matches.length !== 1 ? 'es' : ''}
+          </Text>
         )}
       </View>
 
@@ -35,9 +37,21 @@ export default function RadarScreen() {
         >
           <EmptyState
             icon="warning-outline"
-            title="Sin ubicación"
+            title="Error de ubicación"
             subtitle={error}
             action={{ label: 'Reintentar', onPress: buscarMatches }}
+          />
+        </ScrollView>
+      ) : inventarioVacio ? (
+        <ScrollView
+          contentContainerStyle={styles.centered}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={buscarMatches} />}
+        >
+          <EmptyState
+            icon="albums-outline"
+            title="Tu inventario está vacío"
+            subtitle="Andá a Perfil, cargá tus figuritas faltantes y repetidas, y volvé al radar."
+            action={{ label: 'Buscar de nuevo', onPress: buscarMatches }}
           />
         </ScrollView>
       ) : (
@@ -53,7 +67,10 @@ export default function RadarScreen() {
               <EmptyState
                 icon="radio-outline"
                 title="Sin matches cerca"
-                subtitle="Actualizá tu inventario o ampliá tu radio de búsqueda."
+                subtitle={
+                  'Necesitás figuritas COMPLEMENTARIAS para matchear:\n' +
+                  'lo que vos repetiste debe coincidir con lo que otro busca.'
+                }
                 action={{ label: 'Buscar de nuevo', onPress: buscarMatches }}
               />
             ) : null
@@ -65,7 +82,7 @@ export default function RadarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F0F0F' },
+  container: { flex: 1, backgroundColor: '#111827' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -73,8 +90,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  title: { fontSize: 28, fontWeight: '800', color: '#F5F5F5' },
-  count: { fontSize: 14, color: '#636366' },
+  title: { fontSize: 28, fontWeight: '800', color: '#F9FAFB' },
+  count: { fontSize: 14, color: '#6B7280' },
   list: { padding: 16 },
   centered: { flex: 1, justifyContent: 'center', padding: 20 },
 });

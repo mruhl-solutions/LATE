@@ -36,13 +36,20 @@ export default function IntercambiosLayout() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F0F0F' },
-  title: { fontSize: 28, fontWeight: '800', color: '#F5F5F5', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
+  container: { flex: 1, backgroundColor: '#111827' },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#F9FAFB',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
   tabBar: {
     flexDirection: 'row',
     marginHorizontal: 20,
     marginBottom: 8,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#1F2937',
     borderRadius: 10,
     padding: 3,
   },
@@ -52,7 +59,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  activeTab: { backgroundColor: '#FF6B35' },
-  tabLabel: { fontSize: 14, fontWeight: '600', color: '#636366' },
+  activeTab: { backgroundColor: '#7C3AED' },
+  tabLabel: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
   activeTabLabel: { color: '#FFFFFF' },
 });

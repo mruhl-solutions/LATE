@@ -37,7 +37,8 @@ export function UserMatchCard({ match }: UserMatchCardProps) {
             </View>
           )}
           <Text style={styles.totalCoincidencias}>
-            {match.total_coincidencias} coincidencia{match.total_coincidencias !== 1 ? 's' : ''}
+            {match.total_coincidencias} coincidencia
+            {match.total_coincidencias !== 1 ? 's' : ''}
           </Text>
         </View>
       </View>
@@ -66,15 +67,15 @@ export function UserMatchCard({ match }: UserMatchCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#1F2937',
     borderRadius: 14,
     padding: 16,
     marginBottom: 10,
   },
   top: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
   leftCol: {},
-  alias: { fontSize: 17, fontWeight: '700', color: '#F5F5F5' },
-  distancia: { fontSize: 13, color: '#636366', marginTop: 2 },
+  alias: { fontSize: 17, fontWeight: '700', color: '#F9FAFB' },
+  distancia: { fontSize: 13, color: '#6B7280', marginTop: 2 },
   rightCol: { alignItems: 'flex-end', gap: 4 },
   biBadge: {
     flexDirection: 'row',
@@ -86,22 +87,22 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   biText: { fontSize: 11, color: '#22C55E', fontWeight: '700' },
-  totalCoincidencias: { fontSize: 13, color: '#FF6B35', fontWeight: '600' },
+  totalCoincidencias: { fontSize: 13, color: '#A78BFA', fontWeight: '600' },
   coincidenciasRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#2e1065',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
   },
   pillGreen: { backgroundColor: '#052e16' },
-  pillLabel: { fontSize: 12, color: '#ABABAB' },
-  pillCount: { fontSize: 13, fontWeight: '800', color: '#F5F5F5' },
+  pillLabel: { fontSize: 12, color: '#9CA3AF' },
+  pillCount: { fontSize: 13, fontWeight: '800', color: '#F9FAFB' },
   proponerBtn: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#7C3AED',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',

@@ -68,7 +68,10 @@ export function IntercambioCard({
       <View style={styles.actions}>
         {perspective === 'receptor' && onAceptar && (
           <View style={styles.flex}>
-            <AppButton title="Aceptar" onPress={() => confirmAction('Aceptar propuesta', onAceptar)} />
+            <AppButton
+              title="Aceptar"
+              onPress={() => confirmAction('Aceptar propuesta', onAceptar)}
+            />
           </View>
         )}
         {onCancelar && (
@@ -87,7 +90,7 @@ export function IntercambioCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#1F2937',
     borderRadius: 14,
     padding: 16,
     marginBottom: 10,
@@ -98,12 +101,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 12,
   },
-  alias: { fontSize: 16, fontWeight: '700', color: '#F5F5F5' },
-  date: { fontSize: 12, color: '#636366', marginTop: 2 },
+  alias: { fontSize: 16, fontWeight: '700', color: '#F9FAFB' },
+  date: { fontSize: 12, color: '#6B7280', marginTop: 2 },
   numerosRow: { flexDirection: 'row', gap: 12, marginBottom: 14 },
   numerosCol: { flex: 1 },
-  numerosLabel: { fontSize: 11, color: '#636366', marginBottom: 4, textTransform: 'uppercase' },
-  numeros: { fontSize: 13, color: '#ABABAB', lineHeight: 18 },
+  numerosLabel: { fontSize: 11, color: '#6B7280', marginBottom: 4, textTransform: 'uppercase' },
+  numeros: { fontSize: 13, color: '#9CA3AF', lineHeight: 18 },
   actions: { flexDirection: 'row', gap: 8 },
   flex: { flex: 1 },
 });

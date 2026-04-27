@@ -6,13 +6,10 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/store/authStore';
 import { useIntercambios } from '@/lib/hooks/useIntercambios';
-import { useProfile } from '@/lib/hooks/useProfile';
 import { cleanInventoryString, arrayToDisplayString } from '@/lib/parsers';
 import { AppButton } from '@/components/ui/AppButton';
 import type { Profile } from '@/types/app';
@@ -25,8 +22,6 @@ export default function ProponerScreen() {
   }>();
 
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
-  const { fetchProfile } = useProfile();
   const { crearIntercambio } = useIntercambios();
 
   const [receptor, setReceptor] = useState<Pick<Profile, 'alias'> | null>(null);
@@ -91,7 +86,7 @@ export default function ProponerScreen() {
       <TextInput
         style={styles.input}
         placeholder="Ej: 12, 45, 102"
-        placeholderTextColor="#636366"
+        placeholderTextColor="#6B7280"
         keyboardType="numbers-and-punctuation"
         multiline
         value={pedidos}
@@ -109,7 +104,7 @@ export default function ProponerScreen() {
       <TextInput
         style={styles.input}
         placeholder="Ej: 7, 33, 88"
-        placeholderTextColor="#636366"
+        placeholderTextColor="#6B7280"
         keyboardType="numbers-and-punctuation"
         multiline
         value={ofrecidos}
@@ -122,27 +117,27 @@ export default function ProponerScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F0F0F' },
+  container: { flex: 1, backgroundColor: '#111827' },
   content: { padding: 20, paddingBottom: 40 },
-  subtitle: { fontSize: 16, color: '#ABABAB', marginBottom: 20 },
-  alias: { color: '#FF6B35', fontWeight: '700' },
+  subtitle: { fontSize: 16, color: '#9CA3AF', marginBottom: 20 },
+  alias: { color: '#7C3AED', fontWeight: '700' },
   hint: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#1F2937',
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
   },
-  hintLabel: { fontSize: 12, color: '#636366', marginBottom: 4 },
-  hintNumbers: { fontSize: 13, color: '#ABABAB', lineHeight: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#F5F5F5', marginBottom: 8, marginTop: 8 },
+  hintLabel: { fontSize: 12, color: '#6B7280', marginBottom: 4 },
+  hintNumbers: { fontSize: 13, color: '#9CA3AF', lineHeight: 20 },
+  label: { fontSize: 14, fontWeight: '600', color: '#F9FAFB', marginBottom: 8, marginTop: 8 },
   input: {
-    backgroundColor: '#1C1C1E',
-    color: '#F5F5F5',
+    backgroundColor: '#1F2937',
+    color: '#F9FAFB',
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: '#374151',
     marginBottom: 16,
     minHeight: 60,
   },

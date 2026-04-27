@@ -9,15 +9,17 @@ export function useAuth() {
     if (error) throw error;
   };
 
+  // El perfil se crea automáticamente via trigger on_auth_user_created.
+  // El alias se pasa como metadata para que el trigger lo use.
   const signUp = async (email: string, password: string, alias: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { alias: alias.trim() } },
+    });
     if (error) throw error;
-    if (!data.user) throw new Error('No se pudo crear el usuario');
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({ id: data.user.id, alias });
-    if (profileError) throw profileError;
+    // Si session es null, Supabase tiene confirmación de email activada
+    return { needsEmailConfirmation: !data.session };
   };
 
   const signOut = async () => {

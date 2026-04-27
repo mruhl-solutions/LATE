@@ -45,7 +45,7 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#999"
+          placeholderTextColor="#6B7280"
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
@@ -54,7 +54,7 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="Contraseña"
-          placeholderTextColor="#999"
+          placeholderTextColor="#6B7280"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -71,32 +71,32 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F0F0F' },
+  container: { flex: 1, backgroundColor: '#111827' },
   inner: { flex: 1, justifyContent: 'center', padding: 24 },
   logo: {
     fontSize: 56,
     fontWeight: '900',
-    color: '#FF6B35',
+    color: '#7C3AED',
     textAlign: 'center',
     letterSpacing: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: '#999',
+    color: '#6B7280',
     textAlign: 'center',
     marginBottom: 40,
     marginTop: 4,
   },
   input: {
-    backgroundColor: '#1C1C1E',
-    color: '#F5F5F5',
+    backgroundColor: '#1F2937',
+    color: '#F9FAFB',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: '#374151',
   },
   link: { marginTop: 20, alignSelf: 'center' },
-  linkText: { color: '#FF6B35', fontSize: 15 },
+  linkText: { color: '#7C3AED', fontSize: 15 },
 });

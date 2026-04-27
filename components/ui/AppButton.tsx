@@ -41,10 +41,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  primary: { backgroundColor: '#FF6B35' },
-  secondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#FF6B35' },
+  primary: { backgroundColor: '#7C3AED' },
+  secondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#7C3AED' },
   danger: { backgroundColor: '#EF4444' },
   disabled: { opacity: 0.5 },
   label: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  labelSecondary: { color: '#FF6B35' },
+  labelSecondary: { color: '#7C3AED' },
 });

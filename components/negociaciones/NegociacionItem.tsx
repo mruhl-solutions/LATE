@@ -27,7 +27,9 @@ export function NegociacionItem({ intercambio }: NegociacionItemProps) {
     >
       <View style={styles.left}>
         <Text style={styles.alias}>{contraparte ?? 'Desconocido'}</Text>
-        <Text style={styles.numeros}>{totalNumeros} número{totalNumeros !== 1 ? 's' : ''} en juego</Text>
+        <Text style={styles.numeros}>
+          {totalNumeros} número{totalNumeros !== 1 ? 's' : ''} en juego
+        </Text>
       </View>
       <View style={styles.right}>
         <EstadoBadge estado={intercambio.estado} />
@@ -42,14 +44,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#1F2937',
     borderRadius: 14,
     padding: 16,
     marginBottom: 8,
   },
   left: { flex: 1, marginRight: 12 },
-  alias: { fontSize: 16, fontWeight: '700', color: '#F5F5F5' },
-  numeros: { fontSize: 13, color: '#636366', marginTop: 3 },
+  alias: { fontSize: 16, fontWeight: '700', color: '#F9FAFB' },
+  numeros: { fontSize: 13, color: '#6B7280', marginTop: 3 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  arrow: { fontSize: 22, color: '#636366' },
+  arrow: { fontSize: 22, color: '#6B7280' },
 });

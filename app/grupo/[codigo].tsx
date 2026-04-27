@@ -1,12 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -89,7 +82,7 @@ export default function GrupoScreen() {
   if (loadingGrupo) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color="#FF6B35" />
+        <ActivityIndicator color="#7C3AED" />
       </View>
     );
   }
@@ -147,12 +140,12 @@ export default function GrupoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F0F0F' },
+  container: { flex: 1, backgroundColor: '#111827' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { padding: 20, borderBottomWidth: 1, borderBottomColor: '#2C2C2E' },
-  title: { fontSize: 24, fontWeight: '800', color: '#F5F5F5' },
-  codigo: { fontSize: 13, color: '#636366', marginTop: 4 },
+  header: { padding: 20, borderBottomWidth: 1, borderBottomColor: '#374151' },
+  title: { fontSize: 24, fontWeight: '800', color: '#F9FAFB' },
+  codigo: { fontSize: 13, color: '#6B7280', marginTop: 4 },
   joinBox: { padding: 24, gap: 16 },
-  joinText: { fontSize: 15, color: '#ABABAB', lineHeight: 22 },
+  joinText: { fontSize: 15, color: '#9CA3AF', lineHeight: 22 },
   list: { padding: 16 },
 });

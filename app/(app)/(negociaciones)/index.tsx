@@ -44,7 +44,13 @@ export default function NegociacionesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F0F0F' },
-  title: { fontSize: 28, fontWeight: '800', color: '#F5F5F5', paddingHorizontal: 20, paddingVertical: 12 },
+  container: { flex: 1, backgroundColor: '#111827' },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#F9FAFB',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
   list: { padding: 16 },
 });

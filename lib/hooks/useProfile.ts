@@ -31,6 +31,7 @@ export function useProfile() {
         .update({ faltantes, repetidas })
         .eq('id', user.id);
       if (err) throw err;
+      // Re-fetch para garantizar que los contadores reflejen el estado real de la DB
       setProfile((prev) => (prev ? { ...prev, faltantes, repetidas } : prev));
     },
     [user],
