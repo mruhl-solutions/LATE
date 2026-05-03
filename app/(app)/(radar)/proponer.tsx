@@ -24,8 +24,8 @@ export default function ProponerScreen() {
   const router = useRouter();
   const { crearIntercambio } = useIntercambios();
 
-  const ellosTienen = ellos_tienen ? (JSON.parse(ellos_tienen) as number[]) : [];
-  const yoTengo = yo_tengo ? (JSON.parse(yo_tengo) as number[]) : [];
+  const ellosTienen = ellos_tienen ? (JSON.parse(ellos_tienen) as string[]) : [];
+  const yoTengo = yo_tengo ? (JSON.parse(yo_tengo) as string[]) : [];
 
   const [recibo, setRecibo] = useState('');
   const [doy, setDoy] = useState('');

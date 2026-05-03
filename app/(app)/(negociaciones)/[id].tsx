@@ -22,85 +22,80 @@ import { ChatBubble } from '@/components/negociaciones/ChatBubble';
 import { CalificacionModal } from '@/components/negociaciones/CalificacionModal';
 import { EstadoBadge } from '@/components/intercambios/EstadoBadge';
 import { arrayToDisplayString } from '@/lib/parsers';
+import { C, Colors } from '@/constants/colors';
 import type { IntercambioConAlias } from '@/types/app';
 
 export default function ChatScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: recipientId } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
   const user = useAuthStore((s) => s.user);
   const { confirmar, cancelar, finalizar, eliminarChat } = useIntercambios();
   const { calificar, yaCalifique } = useCalificacion();
 
-  const [intercambio, setIntercambio] = useState<IntercambioConAlias | null>(null);
-  const [otroUsuarioId, setOtroUsuarioId] = useState<string>('');
+  const [intercambios, setIntercambios] = useState<IntercambioConAlias[]>([]);
   const [otroAlias, setOtroAlias] = useState('');
   const [texto, setTexto] = useState('');
   const [sending, setSending] = useState(false);
   const [showRating, setShowRating] = useState(false);
+  const [selectedIntercambio, setSelectedIntercambio] = useState<IntercambioConAlias | null>(null);
+  const [loadingIntercambios, setLoadingIntercambios] = useState(true);
   const flatListRef = useRef<FlatList>(null);
 
-  const { mensajes, loading, enviar } = useChat(id!);
+  const { mensajes, loading, enviar } = useChat(recipientId!);
 
-  const cargarIntercambio = async () => {
-    const { data } = await supabase
-      .from('intercambios')
-      .select(
-        '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
-      )
-      .eq('id', id)
-      .single();
-
-    if (!data) return;
-    setIntercambio(data as IntercambioConAlias);
-
-    const esIniciador = data.iniciador_id === user?.id;
-    const otroId = esIniciador ? data.receptor_id : data.iniciador_id;
-    const alias = esIniciador
-      ? (data.receptor as { alias: string } | undefined)?.alias ?? 'Chat'
-      : (data.iniciador as { alias: string } | undefined)?.alias ?? 'Chat';
-
-    setOtroUsuarioId(otroId ?? '');
-    setOtroAlias(alias);
-    navigation.setOptions({ title: alias });
-
-    // Si terminado, verificar si ya calificó
-    if (data.estado === 'terminado') {
-      const yaCal = await yaCalifique(id!);
-      if (!yaCal) setShowRating(true);
-    }
-  };
-
+  // Cargar intercambios con esta persona
   useEffect(() => {
-    cargarIntercambio();
+    if (!recipientId || !user) return;
 
-    // Suscripción realtime: cuando la contraparte cambia el estado del
-    // intercambio (confirma, cancela, finaliza) se recarga automáticamente.
-    const channel = supabase
-      .channel(`intercambio:${id}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'intercambios', filter: `id=eq.${id}` },
-        () => cargarIntercambio(),
-      )
-      .subscribe();
+    const cargarIntercambios = async () => {
+      const { data } = await supabase
+        .from('intercambios')
+        .select(
+          '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
+        )
+        .or(`and(iniciador_id.eq.${user.id},receptor_id.eq.${recipientId}),and(iniciador_id.eq.${recipientId},receptor_id.eq.${user.id})`)
+        .order('updated_at', { ascending: false });
 
-    return () => {
-      channel.unsubscribe();
+      if (data && data.length > 0) {
+        const intercambiosData = data as IntercambioConAlias[];
+        setIntercambios(intercambiosData);
+        setSelectedIntercambio(intercambiosData[0]);
+
+        const otroId = intercambiosData[0].iniciador_id === user.id
+          ? intercambiosData[0].receptor_id
+          : intercambiosData[0].iniciador_id;
+
+        const otherUser = intercambiosData[0].iniciador_id === user.id
+          ? (intercambiosData[0].receptor as { alias: string } | undefined)
+          : (intercambiosData[0].iniciador as { alias: string } | undefined);
+
+        setOtroAlias(otherUser?.alias ?? 'Chat');
+        navigation.setOptions({ title: otherUser?.alias ?? 'Chat' });
+
+        const yaCal = await yaCalifique(intercambiosData[0].id);
+        if (!yaCal && intercambiosData[0].estado === 'terminado') {
+          setShowRating(true);
+        }
+      }
+
+      setLoadingIntercambios(false);
     };
-  }, [id]);
+
+    cargarIntercambios();
+  }, [recipientId, user]);
 
   const handleEnviar = async () => {
     if (!texto.trim()) return;
     setSending(true);
     try {
-      await enviar(texto);
+      await enviar(texto, selectedIntercambio?.id);
       setTexto('');
     } finally {
       setSending(false);
     }
   };
 
-  const handleAccion = (accion: 'confirmar' | 'cancelar' | 'finalizar') => {
+  const handleAccion = (intercambioId: string, accion: 'confirmar' | 'cancelar' | 'finalizar') => {
     const mensajesConfirm = {
       confirmar: '¿Confirmar el trato? Los números quedarán reservados.',
       cancelar: '¿Cancelar este intercambio?',
@@ -112,13 +107,21 @@ export default function ChatScreen() {
         text: 'Sí',
         onPress: async () => {
           try {
-            if (accion === 'confirmar') await confirmar(id!);
-            if (accion === 'cancelar') await cancelar(id!);
+            if (accion === 'confirmar') await confirmar(intercambioId);
+            if (accion === 'cancelar') await cancelar(intercambioId);
             if (accion === 'finalizar') {
-              await finalizar(id!);
+              await finalizar(intercambioId);
               setShowRating(true);
             }
-            await cargarIntercambio();
+            // Recargar intercambios
+            const { data } = await supabase
+              .from('intercambios')
+              .select('*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)')
+              .or(`and(iniciador_id.eq.${user?.id},receptor_id.eq.${recipientId}),and(iniciador_id.eq.${recipientId},receptor_id.eq.${user?.id})`)
+              .order('updated_at', { ascending: false });
+            if (data) {
+              setIntercambios(data as IntercambioConAlias[]);
+            }
           } catch (e: unknown) {
             Alert.alert('Error', e instanceof Error ? e.message : 'Operación fallida.');
           }
@@ -130,7 +133,7 @@ export default function ChatScreen() {
   const handleEliminarChat = () => {
     Alert.alert(
       'Eliminar chat',
-      '¿Eliminar todos los mensajes de este chat? No se puede deshacer.',
+      '¿Eliminar todos los mensajes con este usuario? No se puede deshacer.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -138,7 +141,7 @@ export default function ChatScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await eliminarChat(id!);
+              await eliminarChat(recipientId!);
             } catch (e: unknown) {
               Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo eliminar.');
             }
@@ -149,14 +152,19 @@ export default function ChatScreen() {
   };
 
   const handleCalificar = async (estrellas: number) => {
-    if (!otroUsuarioId) return;
-    await calificar(id!, otroUsuarioId, estrellas);
+    if (!selectedIntercambio) return;
+    const otroId = selectedIntercambio.iniciador_id === user?.id
+      ? selectedIntercambio.receptor_id
+      : selectedIntercambio.iniciador_id;
+    await calificar(selectedIntercambio.id, otroId, estrellas);
     setShowRating(false);
   };
 
-  if (!intercambio) return <ActivityIndicator style={styles.loader} color="#F0A868" />;
+  if (loadingIntercambios || !selectedIntercambio) {
+    return <ActivityIndicator style={styles.loader} color={C.primary} />;
+  }
 
-  const terminado = intercambio.estado === 'terminado' || intercambio.estado === 'cancelado';
+  const terminado = selectedIntercambio.estado === 'terminado' || selectedIntercambio.estado === 'cancelado';
 
   return (
     <>
@@ -172,12 +180,13 @@ export default function ChatScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={90}
       >
+        {/* Propuesta Box - mostrar intercambio seleccionado */}
         <View style={styles.propuestaBox}>
           <View style={styles.propuestaRow}>
-            <EstadoBadge estado={intercambio.estado} />
-            {intercambio.estado === 'terminado' && !showRating && (
+            <EstadoBadge estado={selectedIntercambio.estado} />
+            {selectedIntercambio.estado === 'terminado' && !showRating && (
               <Pressable onPress={() => setShowRating(true)} style={styles.calificarBtn}>
-                <Ionicons name="star-outline" size={14} color="#F0A868" />
+                <Ionicons name="star-outline" size={14} color={C.Primary} />
                 <Text style={styles.calificarText}>Calificar</Text>
               </Pressable>
             )}
@@ -186,20 +195,47 @@ export default function ChatScreen() {
             <View style={styles.numerosCol}>
               <Text style={styles.numerosLabel}>Pide</Text>
               <Text style={styles.numeros}>
-                {intercambio.numeros_pedidos.length > 0
-                  ? arrayToDisplayString(intercambio.numeros_pedidos)
+                {selectedIntercambio.numeros_pedidos.length > 0
+                  ? arrayToDisplayString(selectedIntercambio.numeros_pedidos)
                   : '—'}
               </Text>
             </View>
             <View style={styles.numerosCol}>
               <Text style={styles.numerosLabel}>Ofrece</Text>
               <Text style={styles.numeros}>
-                {intercambio.numeros_ofrecidos.length > 0
-                  ? arrayToDisplayString(intercambio.numeros_ofrecidos)
+                {selectedIntercambio.numeros_ofrecidos.length > 0
+                  ? arrayToDisplayString(selectedIntercambio.numeros_ofrecidos)
                   : '—'}
               </Text>
             </View>
           </View>
+
+          {intercambios.length > 1 && (
+            <View style={styles.intercambioSelector}>
+              <Text style={styles.selectorLabel}>Intercambios con {otroAlias}:</Text>
+              <View style={styles.selectorButtons}>
+                {intercambios.map((inter, idx) => (
+                  <Pressable
+                    key={inter.id}
+                    style={[
+                      styles.selectorBtn,
+                      selectedIntercambio.id === inter.id && styles.selectorBtnActive,
+                    ]}
+                    onPress={() => setSelectedIntercambio(inter)}
+                  >
+                    <Text
+                      style={[
+                        styles.selectorBtnText,
+                        selectedIntercambio.id === inter.id && styles.selectorBtnTextActive,
+                      ]}
+                    >
+                      #{idx + 1}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
 
         <FlatList
@@ -207,7 +243,7 @@ export default function ChatScreen() {
           data={mensajes}
           keyExtractor={(m) => m.id}
           renderItem={({ item }) => (
-            <ChatBubble mensaje={item} esMio={item.autor_id === user?.id} />
+            <ChatBubble mensaje={item} esMio={item.sender_id === user?.id} />
           )}
           contentContainerStyle={styles.messagesList}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
@@ -216,25 +252,33 @@ export default function ChatScreen() {
         {!terminado && (
           <>
             <View style={styles.acciones}>
-              {intercambio.estado === 'en_curso' && (
+              {selectedIntercambio.estado === 'iniciado' && selectedIntercambio.receptor_id === user?.id && (
                 <Pressable
                   style={styles.btnConfirmar}
-                  onPress={() => handleAccion('confirmar')}
+                  onPress={() => handleAccion(selectedIntercambio.id, 'confirmar')}
+                >
+                  <Text style={styles.btnText}>Aceptar</Text>
+                </Pressable>
+              )}
+              {selectedIntercambio.estado === 'en_curso' && (
+                <Pressable
+                  style={styles.btnConfirmar}
+                  onPress={() => handleAccion(selectedIntercambio.id, 'confirmar')}
                 >
                   <Text style={styles.btnText}>Confirmar trato</Text>
                 </Pressable>
               )}
-              {intercambio.estado === 'aceptado' && (
+              {selectedIntercambio.estado === 'aceptado' && (
                 <Pressable
                   style={styles.btnFinalizar}
-                  onPress={() => handleAccion('finalizar')}
+                  onPress={() => handleAccion(selectedIntercambio.id, 'finalizar')}
                 >
                   <Text style={styles.btnText}>¡Hecho! Finalizar</Text>
                 </Pressable>
               )}
               <Pressable
                 style={styles.btnCancelar}
-                onPress={() => handleAccion('cancelar')}
+                onPress={() => handleAccion(selectedIntercambio.id, 'cancelar')}
               >
                 <Text style={styles.btnCancelarText}>Cancelar</Text>
               </Pressable>
@@ -244,7 +288,7 @@ export default function ChatScreen() {
               <TextInput
                 style={styles.textInput}
                 placeholder="Mensaje..."
-                placeholderTextColor="#6B7280"
+                placeholderTextColor={C.Secondary}
                 value={texto}
                 onChangeText={setTexto}
                 onSubmitEditing={handleEnviar}
@@ -264,9 +308,9 @@ export default function ChatScreen() {
         {terminado && (
           <View style={styles.terminadoBanner}>
             <Text style={styles.terminadoText}>
-              {intercambio.estado === 'terminado'
-                ? '✅ Intercambio finalizado · Chat guardado'
-                : '❌ Intercambio cancelado · Chat guardado'}
+              {selectedIntercambio.estado === 'terminado'
+                ? '✅ Intercambio finalizado'
+                : '❌ Intercambio cancelado'}
             </Text>
             <Pressable onPress={handleEliminarChat} style={styles.deleteChatBtn}>
               <Ionicons name="trash-outline" size={13} color="#EF4444" />
@@ -280,13 +324,13 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1F2430' },
+  container: { flex: 1, backgroundColor: C.bg },
   loader: { flex: 1 },
   propuestaBox: {
-    backgroundColor: '#252B3B',
+    backgroundColor: C.surface,
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#2E3650',
+    borderBottomColor: C.border,
   },
   propuestaRow: {
     flexDirection: 'row',
@@ -303,13 +347,20 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#F0A86844',
+    borderColor: C.primaryAlpha,
   },
-  calificarText: { fontSize: 12, color: '#F0A868', fontWeight: '600' },
-  numerosRow: { flexDirection: 'row', gap: 12 },
+  calificarText: { fontSize: 12, color: C.primary, fontWeight: '600' },
+  numerosRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
   numerosCol: { flex: 1 },
-  numerosLabel: { fontSize: 11, color: '#6B7280', marginBottom: 2, textTransform: 'uppercase' },
-  numeros: { fontSize: 13, color: '#9CA3AF', lineHeight: 18 },
+  numerosLabel: { fontSize: 11, color: C.textMuted, marginBottom: 2, textTransform: 'uppercase' },
+  numeros: { fontSize: 13, color: C.textSecondary, lineHeight: 18 },
+  intercambioSelector: { gap: 6 },
+  selectorLabel: { fontSize: 11, color: C.textMuted, fontWeight: '600' },
+  selectorButtons: { flexDirection: 'row', gap: 6 },
+  selectorBtn: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border },
+  selectorBtnActive: { backgroundColor: C.primary, borderColor: C.primary },
+  selectorBtnText: { fontSize: 11, color: C.textMuted, fontWeight: '600' },
+  selectorBtnTextActive: { color: '#fff' },
   messagesList: { padding: 12, paddingBottom: 8 },
   acciones: {
     flexDirection: 'row',
@@ -317,18 +368,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: '#2E3650',
+    borderTopColor: C.border,
   },
   btnConfirmar: {
     flex: 1,
-    backgroundColor: '#A8D5B9',
+    backgroundColor: C.accent,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
   },
   btnFinalizar: {
     flex: 1,
-    backgroundColor: '#F0A868',
+    backgroundColor: C.primary,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
@@ -339,10 +390,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#EF4444',
+    borderColor: C.danger,
     alignItems: 'center',
   },
-  btnCancelarText: { color: '#EF4444', fontWeight: '600', fontSize: 13 },
+  btnCancelarText: { color: C.danger, fontWeight: '600', fontSize: 13 },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -350,12 +401,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: '#2E3650',
+    borderTopColor: C.border,
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#252B3B',
-    color: '#F5F0EB',
+    backgroundColor: C.surface,
+    color: C.textPrimary,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -366,7 +417,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#F0A868',
+    backgroundColor: C.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -375,10 +426,10 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#2E3650',
+    borderTopColor: C.border,
     gap: 8,
   },
-  terminadoText: { color: '#6B7280', fontSize: 13 },
+  terminadoText: { color: C.textMuted, fontSize: 13 },
   deleteChatBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -387,7 +438,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#EF444433',
+    borderColor: C.dangerAlpha,
   },
-  deleteChatText: { fontSize: 12, color: '#EF4444', fontWeight: '600' },
+  deleteChatText: { fontSize: 12, color: C.danger, fontWeight: '600' },
 });

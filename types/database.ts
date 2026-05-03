@@ -14,8 +14,8 @@ export interface Database {
           alias: string;
           ubicacion: unknown | null;
           radio_km: number;
-          faltantes: number[];
-          repetidas: number[];
+          faltantes: string[];
+          repetidas: string[];
           visible_radar: boolean;
           total_figuritas: number;
           created_at: string;
@@ -26,8 +26,8 @@ export interface Database {
           alias: string;
           ubicacion?: unknown | null;
           radio_km?: number;
-          faltantes?: number[];
-          repetidas?: number[];
+          faltantes?: string[];
+          repetidas?: string[];
           visible_radar?: boolean;
           total_figuritas?: number;
         };
@@ -35,10 +35,39 @@ export interface Database {
           alias?: string;
           ubicacion?: unknown | null;
           radio_km?: number;
-          faltantes?: number[];
-          repetidas?: number[];
+          faltantes?: string[];
+          repetidas?: string[];
           visible_radar?: boolean;
           total_figuritas?: number;
+        };
+      };
+      user_albumes: {
+        Row: {
+          id: string;
+          user_id: string;
+          nombre: string;
+          faltantes: string[];
+          repetidas: string[];
+          total_figuritas: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          nombre: string;
+          faltantes?: string[];
+          repetidas?: string[];
+          total_figuritas?: number;
+          is_active?: boolean;
+        };
+        Update: {
+          nombre?: string;
+          faltantes?: string[];
+          repetidas?: string[];
+          total_figuritas?: number;
+          is_active?: boolean;
         };
       };
       grupos: {
@@ -76,8 +105,8 @@ export interface Database {
           id: string;
           iniciador_id: string;
           receptor_id: string;
-          numeros_pedidos: number[];
-          numeros_ofrecidos: number[];
+          numeros_pedidos: string[];
+          numeros_ofrecidos: string[];
           estado: EstadoIntercambio;
           grupo_id: string | null;
           created_at: string;
@@ -87,30 +116,32 @@ export interface Database {
           id?: string;
           iniciador_id: string;
           receptor_id: string;
-          numeros_pedidos?: number[];
-          numeros_ofrecidos?: number[];
+          numeros_pedidos?: string[];
+          numeros_ofrecidos?: string[];
           estado?: EstadoIntercambio;
           grupo_id?: string | null;
         };
         Update: {
-          numeros_pedidos?: number[];
-          numeros_ofrecidos?: number[];
+          numeros_pedidos?: string[];
+          numeros_ofrecidos?: string[];
           estado?: EstadoIntercambio;
         };
       };
       mensajes: {
         Row: {
           id: string;
-          intercambio_id: string;
-          autor_id: string;
+          sender_id: string;
+          recipient_id: string;
           contenido: string;
+          intercambio_id: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
-          intercambio_id: string;
-          autor_id: string;
+          sender_id: string;
+          recipient_id: string;
           contenido: string;
+          intercambio_id?: string | null;
         };
         Update: never;
       };
@@ -118,11 +149,26 @@ export interface Database {
     Functions: {
       buscar_matches_radar: {
         Args: { p_usuario_id: string };
-        Returns: import('@/types/app').MatchResult[];
+        Returns: Array<{
+          usuario_id: string;
+          alias: string;
+          distancia_km: number;
+          ellos_tienen_yo_busco: string[];
+          yo_tengo_ellos_buscan: string[];
+          total_coincidencias: number;
+          es_bidireccional: boolean;
+        }>;
       };
       buscar_matches_grupo: {
         Args: { p_grupo_id: string; p_usuario_id: string };
-        Returns: import('@/types/app').MatchResult[];
+        Returns: Array<{
+          usuario_id: string;
+          alias: string;
+          ellos_tienen_yo_busco: string[];
+          yo_tengo_ellos_buscan: string[];
+          total_coincidencias: number;
+          es_bidireccional: boolean;
+        }>;
       };
       finalizar_intercambio: {
         Args: { p_intercambio_id: string };

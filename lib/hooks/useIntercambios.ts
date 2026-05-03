@@ -3,54 +3,42 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import type { IntercambioConAlias } from '@/types/app';
 
+export interface ConversacionInfo {
+  usuario_id: string;
+  alias: string;
+  ultimo_mensaje_fecha: string;
+  intercambios: IntercambioConAlias[];
+}
+
 export function useIntercambios() {
   const user = useAuthStore((s) => s.user);
-  const [recibidas, setRecibidas] = useState<IntercambioConAlias[]>([]);
-  const [enviadas, setEnviadas] = useState<IntercambioConAlias[]>([]);
+  const [conversaciones, setConversaciones] = useState<ConversacionInfo[]>([]);
   const [negociaciones, setNegociaciones] = useState<IntercambioConAlias[]>([]);
-  const [historial, setHistorial] = useState<IntercambioConAlias[]>([]);
   const [completados, setCompletados] = useState<IntercambioConAlias[]>([]);
+  const [historial, setHistorial] = useState<IntercambioConAlias[]>([]);
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Obtiene todos los intercambios y agrupa por persona.
+   * Las conversaciones incluyen todos los intercambios con esa persona.
+   */
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
-    const [recv, sent, neg, hist, comp] = await Promise.all([
-      supabase
-        .from('intercambios')
-        .select('*, iniciador:profiles!iniciador_id(alias)')
-        .eq('receptor_id', user.id)
-        .eq('estado', 'iniciado')
-        .order('updated_at', { ascending: false }),
-
-      supabase
-        .from('intercambios')
-        .select('*, receptor:profiles!receptor_id(alias)')
-        .eq('iniciador_id', user.id)
-        .eq('estado', 'iniciado')
-        .order('updated_at', { ascending: false }),
-
-      supabase
+    try {
+      // Obtener todos los intercambios activos/en negociación
+      const { data: activos } = await supabase
         .from('intercambios')
         .select(
           '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
         )
         .or(`iniciador_id.eq.${user.id},receptor_id.eq.${user.id}`)
-        .in('estado', ['en_curso', 'aceptado'])
-        .order('updated_at', { ascending: false }),
+        .in('estado', ['iniciado', 'en_curso', 'aceptado'])
+        .order('updated_at', { ascending: false });
 
-      supabase
-        .from('intercambios')
-        .select(
-          '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
-        )
-        .or(`iniciador_id.eq.${user.id},receptor_id.eq.${user.id}`)
-        .eq('estado', 'cancelado')
-        .order('updated_at', { ascending: false })
-        .limit(50),
-
-      supabase
+      // Obtener intercambios completados
+      const { data: comp } = await supabase
         .from('intercambios')
         .select(
           '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
@@ -58,22 +46,78 @@ export function useIntercambios() {
         .or(`iniciador_id.eq.${user.id},receptor_id.eq.${user.id}`)
         .eq('estado', 'terminado')
         .order('updated_at', { ascending: false })
-        .limit(50),
-    ]);
+        .limit(50);
 
-    setRecibidas((recv.data as IntercambioConAlias[]) ?? []);
-    setEnviadas((sent.data as IntercambioConAlias[]) ?? []);
-    setNegociaciones((neg.data as IntercambioConAlias[]) ?? []);
-    setHistorial((hist.data as IntercambioConAlias[]) ?? []);
-    setCompletados((comp.data as IntercambioConAlias[]) ?? []);
-    setLoading(false);
+      // Obtener intercambios cancelados
+      const { data: cancelados } = await supabase
+        .from('intercambios')
+        .select(
+          '*, iniciador:profiles!iniciador_id(alias), receptor:profiles!receptor_id(alias)',
+        )
+        .or(`iniciador_id.eq.${user.id},receptor_id.eq.${user.id}`)
+        .eq('estado', 'cancelado')
+        .order('updated_at', { ascending: false })
+        .limit(50);
+
+      const allActivos = (activos as IntercambioConAlias[]) ?? [];
+      const allComp = (comp as IntercambioConAlias[]) ?? [];
+      const allCancelados = (cancelados as IntercambioConAlias[]) ?? [];
+
+      // Separar en negociaciones, completados e historial
+      setNegociaciones(allActivos);
+      setCompletados(allComp);
+      setHistorial(allCancelados);
+
+      // Agrupar por persona para conversaciones
+      const conversacionesMap = new Map<string, ConversacionInfo>();
+
+      for (const intercambio of allActivos) {
+        const otherUserId =
+          intercambio.iniciador_id === user.id
+            ? intercambio.receptor_id
+            : intercambio.iniciador_id;
+
+        const otherUser =
+          intercambio.iniciador_id === user.id
+            ? (intercambio.receptor as { alias: string } | undefined)
+            : (intercambio.iniciador as { alias: string } | undefined);
+
+        const alias = otherUser?.alias ?? 'Unknown';
+
+        if (!conversacionesMap.has(otherUserId)) {
+          conversacionesMap.set(otherUserId, {
+            usuario_id: otherUserId,
+            alias,
+            ultimo_mensaje_fecha: intercambio.updated_at,
+            intercambios: [],
+          });
+        }
+
+        const conv = conversacionesMap.get(otherUserId)!;
+        conv.intercambios.push(intercambio);
+
+        if (intercambio.updated_at > conv.ultimo_mensaje_fecha) {
+          conv.ultimo_mensaje_fecha = intercambio.updated_at;
+        }
+      }
+
+      const conversacionesArray = Array.from(conversacionesMap.values())
+        .sort((a, b) =>
+          new Date(b.ultimo_mensaje_fecha).getTime() -
+          new Date(a.ultimo_mensaje_fecha).getTime()
+        );
+
+      setConversaciones(conversacionesArray);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   const crearIntercambio = useCallback(
     async (
       receptor_id: string,
-      numeros_pedidos: number[],
-      numeros_ofrecidos: number[],
+      numeros_pedidos: string[],
+      numeros_ofrecidos: string[],
       grupo_id?: string,
     ) => {
       if (!user) return;
@@ -137,22 +181,24 @@ export function useIntercambios() {
   );
 
   const eliminarChat = useCallback(
-    async (intercambioId: string) => {
+    async (userId: string) => {
+      if (!user) return;
       const { error } = await supabase
         .from('mensajes')
         .delete()
-        .eq('intercambio_id', intercambioId);
+        .or(
+          `and(sender_id.eq.${user.id},recipient_id.eq.${userId}),and(sender_id.eq.${userId},recipient_id.eq.${user.id})`
+        );
       if (error) throw error;
     },
-    [],
+    [user],
   );
 
   return {
-    recibidas,
-    enviadas,
+    conversaciones,
     negociaciones,
-    historial,
     completados,
+    historial,
     loading,
     fetchAll,
     crearIntercambio,

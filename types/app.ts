@@ -6,13 +6,14 @@ export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type Grupo = Database['public']['Tables']['grupos']['Row'];
 export type Intercambio = Database['public']['Tables']['intercambios']['Row'];
 export type Mensaje = Database['public']['Tables']['mensajes']['Row'];
+export type Album = Database['public']['Tables']['user_albumes']['Row'];
 
 export interface MatchResult {
   usuario_id: string;
   alias: string;
   distancia_km?: number;
-  ellos_tienen_yo_busco: number[];
-  yo_tengo_ellos_buscan: number[];
+  ellos_tienen_yo_busco: string[];
+  yo_tengo_ellos_buscan: string[];
   total_coincidencias: number;
   es_bidireccional: boolean;
 }

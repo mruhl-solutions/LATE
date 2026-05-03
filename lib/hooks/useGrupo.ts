@@ -121,11 +121,11 @@ export function useGrupo() {
 
       if (!memberProfiles) return [];
 
-      const myFaltantesSet = new Set<number>(myProfile.faltantes);
-      const myRepetidasSet = new Set<number>(myProfile.repetidas);
+      const myFaltantesSet = new Set<string>(myProfile.faltantes);
+      const myRepetidasSet = new Set<string>(myProfile.repetidas);
 
       return memberProfiles
-        .map((p: { id: string; alias: string; faltantes: number[]; repetidas: number[] }) => {
+        .map((p: { id: string; alias: string; faltantes: string[]; repetidas: string[] }) => {
           const ellos_tienen_yo_busco = p.repetidas.filter((n) => myFaltantesSet.has(n));
           const yo_tengo_ellos_buscan = p.faltantes.filter((n) => myRepetidasSet.has(n));
           return {
