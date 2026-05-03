@@ -11,53 +11,61 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useProfile } from '@/lib/hooks/useProfile';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { useGrupo } from '@/lib/hooks/useGrupo';
 import { useCalificacion } from '@/lib/hooks/useCalificacion';
 import { useAuthStore } from '@/store/authStore';
 import { InventarioInput } from '@/components/perfil/InventarioInput';
 import { AlbumStats } from '@/components/perfil/AlbumStats';
 import { AppButton } from '@/components/ui/AppButton';
 import { cleanInventoryString, arrayToDisplayString } from '@/lib/parsers';
-import type { Grupo } from '@/types/app';
+import { C } from '@/constants/colors';
+import type { Album } from '@/types/app';
 
 export default function PerfilScreen() {
-  const { profile, fetchProfile, updateInventario, updateTotalFiguritas } = useProfile();
+  const {
+    profile,
+    albums,
+    fetchProfile,
+    fetchAlbums,
+    updateInventario,
+    crearAlbum,
+    actualizarAlbum,
+    activarAlbum,
+    eliminarAlbum,
+  } = useProfile();
   const { signOut } = useAuth();
-  const { misGrupos, fetchMisGrupos, crearGrupo, unirseAGrupo, salirDeGrupo, eliminarGrupo } = useGrupo();
   const { promedioEstrellas } = useCalificacion();
   const user = useAuthStore((s) => s.user);
-  const router = useRouter();
 
-  const [faltantesStr, setFaltantesStr] = useState('');
+  const [necesitoStr, setNecesitoStr] = useState('');
   const [repetidasStr, setRepetidasStr] = useState('');
   const [saving, setSaving] = useState(false);
   const [promedio, setPromedio] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [totalModal, setTotalModal] = useState(false);
-  const [totalInput, setTotalInput] = useState('');
 
-  // Modal unirse
-  const [joinModalVisible, setJoinModalVisible] = useState(false);
-  const [joinCodigo, setJoinCodigo] = useState('');
-  const [joining, setJoining] = useState(false);
+  // Album management modals
+  const [showCreateAlbum, setShowCreateAlbum] = useState(false);
+  const [albumNameInput, setAlbumNameInput] = useState('');
+  const [creatingAlbum, setCreatingAlbum] = useState(false);
+
+  const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
+  const [editAlbumName, setEditAlbumName] = useState('');
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([
       fetchProfile(),
-      fetchMisGrupos(),
+      fetchAlbums(),
       user ? promedioEstrellas(user.id).then(setPromedio) : Promise.resolve(),
     ]);
     setRefreshing(false);
-  }, [fetchProfile, fetchMisGrupos, promedioEstrellas, user]);
+  }, [fetchProfile, fetchAlbums, promedioEstrellas, user]);
 
   useEffect(() => {
     fetchProfile();
-    fetchMisGrupos();
+    fetchAlbums();
   }, []);
 
   useEffect(() => {
@@ -66,20 +74,19 @@ export default function PerfilScreen() {
 
   useEffect(() => {
     if (profile) {
-      setFaltantesStr(arrayToDisplayString(profile.faltantes));
+      setNecesitoStr(arrayToDisplayString(profile.necesito));
       setRepetidasStr(arrayToDisplayString(profile.repetidas));
-      setTotalInput(String(profile.total_figuritas ?? 638));
     }
   }, [profile]);
 
   const handleGuardarInventario = async () => {
     setSaving(true);
     try {
-      const faltantes = cleanInventoryString(faltantesStr);
+      const necesito = cleanInventoryString(necesitoStr);
       const repetidas = cleanInventoryString(repetidasStr);
-      await updateInventario(faltantes, repetidas);
+      await updateInventario(necesito, repetidas);
       await fetchProfile();
-      Alert.alert('Guardado', `Faltantes: ${faltantes.length} · Repetidas: ${repetidas.length}`);
+      Alert.alert('Guardado', `Necesito: ${necesito.length} · Repetidas: ${repetidas.length}`);
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo guardar.');
     } finally {
@@ -87,68 +94,47 @@ export default function PerfilScreen() {
     }
   };
 
-  const handleGuardarTotal = async () => {
-    const n = parseInt(totalInput, 10);
-    if (isNaN(n) || n < 10 || n > 2000) {
-      Alert.alert('Valor inválido', 'El total debe estar entre 10 y 2000.');
+  const handleCrearAlbum = async () => {
+    if (!albumNameInput.trim()) {
+      Alert.alert('Error', 'Ingresá un nombre para el álbum.');
       return;
     }
+    setCreatingAlbum(true);
     try {
-      await updateTotalFiguritas(n);
-      setTotalModal(false);
+      await crearAlbum(albumNameInput.trim());
+      setAlbumNameInput('');
+      setShowCreateAlbum(false);
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo guardar.');
-    }
-  };
-
-  const handleCrearGrupo = () => {
-    Alert.prompt('Nuevo grupo', 'Nombre del grupo:', async (nombre) => {
-      if (!nombre?.trim()) return;
-      try {
-        const grupo = await crearGrupo(nombre.trim());
-        router.push(`/grupo/${grupo.codigo}` as never);
-      } catch (e: unknown) {
-        Alert.alert('Error', e instanceof Error ? e.message : 'Intentá de nuevo.');
-      }
-    }, 'plain-text');
-  };
-
-  const handleUnirse = async () => {
-    if (!joinCodigo.trim()) return;
-    setJoining(true);
-    try {
-      const grupo = await unirseAGrupo(joinCodigo);
-      setJoinModalVisible(false);
-      setJoinCodigo('');
-      router.push(`/grupo/${grupo.codigo}` as never);
-    } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Código inválido o grupo no encontrado.');
+      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo crear el álbum.');
     } finally {
-      setJoining(false);
+      setCreatingAlbum(false);
     }
   };
 
-  const handleSalir = (grupo: Grupo) => {
-    Alert.alert('Salir del grupo', `¿Salir de "${grupo.nombre}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Salir',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await salirDeGrupo(grupo.id);
-          } catch (e: unknown) {
-            Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo salir del grupo.');
-          }
-        },
-      },
-    ]);
+  const handleActivarAlbum = async (album: Album) => {
+    if (album.is_active) return;
+    try {
+      await activarAlbum(album.id);
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo cambiar de álbum.');
+    }
   };
 
-  const handleEliminar = (grupo: Grupo) => {
+  const handleRenombrarAlbum = async () => {
+    if (!editingAlbum || !editAlbumName.trim()) return;
+    try {
+      await actualizarAlbum(editingAlbum.id, editAlbumName.trim());
+      setEditingAlbum(null);
+      setEditAlbumName('');
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo renombrar.');
+    }
+  };
+
+  const handleEliminarAlbum = (album: Album) => {
     Alert.alert(
-      'Eliminar grupo',
-      `¿Eliminar "${grupo.nombre}"? Esta acción no se puede deshacer y todos los miembros perderán el acceso.`,
+      'Eliminar álbum',
+      `¿Eliminar "${album.nombre}"? Perderás su inventario.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -156,9 +142,9 @@ export default function PerfilScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await eliminarGrupo(grupo.id);
+              await eliminarAlbum(album.id);
             } catch (e: unknown) {
-              Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo eliminar el grupo.');
+              Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo eliminar.');
             }
           },
         },
@@ -173,51 +159,55 @@ export default function PerfilScreen() {
     ]);
   };
 
-  const renderStars = (valor: number) => [1, 2, 3, 4, 5].map((s) => (s <= Math.round(valor) ? '★' : '☆')).join('');
+  const renderStars = (valor: number) =>
+    [1, 2, 3, 4, 5].map((s) => (s <= Math.round(valor) ? '★' : '☆')).join('');
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Modal total figuritas */}
-      <Modal visible={totalModal} transparent animationType="fade">
+      {/* Modal: Crear álbum */}
+      <Modal visible={showCreateAlbum} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Total del álbum</Text>
-            <Text style={styles.modalSubtitle}>¿Cuántas figuritas tiene el álbum completo?</Text>
+            <Text style={styles.modalTitle}>Nuevo álbum</Text>
+            <Text style={styles.modalSubtitle}>
+              Podés tener varios álbumes con diferentes colecciones
+            </Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Ej: 638"
-              placeholderTextColor="#6B7280"
-              value={totalInput}
-              onChangeText={setTotalInput}
-              keyboardType="number-pad"
-              maxLength={4}
+              placeholder="Ej: Mundial 2026, Copa América..."
+              placeholderTextColor={C.textMuted}
+              value={albumNameInput}
+              onChangeText={setAlbumNameInput}
+              editable={!creatingAlbum}
+              autoFocus
             />
-            <AppButton title="Guardar" onPress={handleGuardarTotal} />
-            <Pressable onPress={() => setTotalModal(false)} style={styles.modalCancel}>
+            <AppButton
+              title={creatingAlbum ? 'Creando...' : 'Crear álbum'}
+              onPress={handleCrearAlbum}
+              loading={creatingAlbum}
+            />
+            <Pressable onPress={() => { setShowCreateAlbum(false); setAlbumNameInput(''); }} style={styles.modalCancel}>
               <Text style={styles.modalCancelText}>Cancelar</Text>
             </Pressable>
           </View>
         </View>
       </Modal>
 
-      {/* Modal unirse */}
-      <Modal visible={joinModalVisible} transparent animationType="fade">
+      {/* Modal: Renombrar álbum */}
+      <Modal visible={!!editingAlbum} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Unirse a un grupo</Text>
-            <Text style={styles.modalSubtitle}>Ingresá el código del grupo</Text>
+            <Text style={styles.modalTitle}>Renombrar álbum</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Ej: A3F92C"
-              placeholderTextColor="#6B7280"
-              value={joinCodigo}
-              onChangeText={(t) => setJoinCodigo(t.toUpperCase())}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              maxLength={12}
+              placeholder="Nuevo nombre"
+              placeholderTextColor={C.textMuted}
+              value={editAlbumName}
+              onChangeText={setEditAlbumName}
+              autoFocus
             />
-            <AppButton title="Unirse" onPress={handleUnirse} loading={joining} disabled={!joinCodigo.trim()} />
-            <Pressable onPress={() => { setJoinModalVisible(false); setJoinCodigo(''); }} style={styles.modalCancel}>
+            <AppButton title="Guardar" onPress={handleRenombrarAlbum} />
+            <Pressable onPress={() => { setEditingAlbum(null); setEditAlbumName(''); }} style={styles.modalCancel}>
               <Text style={styles.modalCancelText}>Cancelar</Text>
             </Pressable>
           </View>
@@ -226,7 +216,9 @@ export default function PerfilScreen() {
 
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#F0A868" />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.primary} />
+        }
       >
         {/* Header */}
         <View style={styles.header}>
@@ -244,96 +236,99 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* Inventario */}
+        {/* Inventario activo */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Mi Álbum</Text>
-            <Pressable style={styles.grupoActionBtn} onPress={() => setTotalModal(true)}>
-              <Ionicons name="options-outline" size={13} color="#F0A868" />
-              <Text style={styles.grupoActionText}>{profile?.total_figuritas ?? 638} fig.</Text>
-            </Pressable>
-          </View>
+          <Text style={styles.sectionTitle}>Mi Inventario</Text>
+          <Text style={styles.sectionHint}>
+            Cargá lo que buscás y lo que tenés de sobra para intercambiar.
+          </Text>
           {profile && (
             <AlbumStats
-              faltantes={profile.faltantes.length}
+              necesito={profile.necesito.length}
               repetidas={profile.repetidas.length}
-              totalFiguritas={profile.total_figuritas ?? 638}
             />
           )}
           <InventarioInput
-            label="Me faltan"
-            icon="bookmark-outline"
-            value={faltantesStr}
-            onChangeText={setFaltantesStr}
-            accentColor="#7BAFD4"
-            savedCount={profile?.faltantes.length ?? 0}
+            label="Necesito"
+            icon="search-outline"
+            value={necesitoStr}
+            onChangeText={setNecesitoStr}
+            accentColor={C.info}
+            savedCount={profile?.necesito.length ?? 0}
           />
           <InventarioInput
-            label="Tengo repetidas"
+            label="Tengo para cambiar"
             icon="copy-outline"
             value={repetidasStr}
             onChangeText={setRepetidasStr}
-            accentColor="#F59E0B"
+            accentColor={C.primary}
             savedCount={profile?.repetidas.length ?? 0}
           />
           <AppButton title="Guardar inventario" onPress={handleGuardarInventario} loading={saving} />
         </View>
 
-        {/* Grupos */}
+        {/* Álbumes */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Mis Grupos</Text>
-            <View style={styles.grupoActions}>
-              <Pressable style={styles.grupoActionBtn} onPress={() => setJoinModalVisible(true)}>
-                <Ionicons name="enter-outline" size={13} color="#F0A868" />
-                <Text style={styles.grupoActionText}>Unirse</Text>
-              </Pressable>
-              <Pressable style={styles.grupoActionBtn} onPress={handleCrearGrupo}>
-                <Ionicons name="add" size={13} color="#F0A868" />
-                <Text style={styles.grupoActionText}>Crear</Text>
-              </Pressable>
+            <View>
+              <Text style={styles.sectionTitle}>Mis Álbumes</Text>
+              <Text style={styles.sectionHint}>
+                Organizá distintas colecciones por separado.
+              </Text>
             </View>
+            <Pressable style={styles.addAlbumBtn} onPress={() => setShowCreateAlbum(true)}>
+              <Ionicons name="add" size={16} color={C.primary} />
+              <Text style={styles.addAlbumText}>Nuevo</Text>
+            </Pressable>
           </View>
 
-          {misGrupos.length === 0 && (
-            <Text style={styles.emptyText}>No pertenecés a ningún grupo todavía.</Text>
+          {albums.length === 0 && (
+            <View style={styles.emptyAlbums}>
+              <Ionicons name="albums-outline" size={28} color={C.border} />
+              <Text style={styles.emptyAlbumsText}>
+                Sin álbumes guardados. Creá uno para organizar distintas colecciones.
+              </Text>
+            </View>
           )}
 
-          {misGrupos.map((grupo) => {
-            const esCreador = grupo.creador_id === user?.id;
-            return (
-              <View key={grupo.id} style={styles.grupoItem}>
-                {/* Tap para ver el detalle */}
-                <Pressable style={styles.grupoInfo} onPress={() => router.push(`/grupo/${grupo.codigo}` as never)}>
-                  <View style={styles.grupoInfoText}>
-                    <Text style={styles.grupoNombre}>{grupo.nombre}</Text>
-                    <View style={styles.grupoMeta}>
-                      <Text style={styles.grupoCodigo}>{grupo.codigo.toUpperCase()}</Text>
-                      {esCreador && (
-                        <View style={styles.creadorBadge}>
-                          <Text style={styles.creadorText}>Tuyo</Text>
-                        </View>
-                      )}
+          {albums.map((album) => (
+            <View key={album.id} style={[styles.albumItem, album.is_active && styles.albumItemActive]}>
+              <Pressable style={styles.albumMain} onPress={() => handleActivarAlbum(album)}>
+                <View style={styles.albumInfo}>
+                  {album.is_active && (
+                    <View style={styles.activeBadge}>
+                      <Ionicons name="checkmark-circle" size={12} color={C.accent} />
+                      <Text style={styles.activeBadgeText}>Activo</Text>
                     </View>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color="#6B7280" />
-                </Pressable>
+                  )}
+                  <Text style={[styles.albumNombre, album.is_active && styles.albumNombreActive]}>
+                    {album.nombre}
+                  </Text>
+                  <Text style={styles.albumStats}>
+                    {album.necesito.length} necesito · {album.repetidas.length} repetidas
+                  </Text>
+                </View>
+                {!album.is_active && (
+                  <Text style={styles.activarText}>Activar</Text>
+                )}
+              </Pressable>
 
-                {/* Acción: salir o eliminar */}
+              <View style={styles.albumActions}>
                 <Pressable
-                  style={[styles.grupoActionIcon, esCreador ? styles.grupoDeleteIcon : styles.grupoLeaveIcon]}
-                  onPress={() => esCreador ? handleEliminar(grupo) : handleSalir(grupo)}
-                  hitSlop={8}
+                  style={styles.albumActionBtn}
+                  onPress={() => { setEditingAlbum(album); setEditAlbumName(album.nombre); }}
                 >
-                  <Ionicons
-                    name={esCreador ? 'trash-outline' : 'exit-outline'}
-                    size={16}
-                    color={esCreador ? '#EF4444' : '#F0A868'}
-                  />
+                  <Ionicons name="pencil-outline" size={15} color={C.textMuted} />
+                </Pressable>
+                <Pressable
+                  style={styles.albumActionBtn}
+                  onPress={() => handleEliminarAlbum(album)}
+                >
+                  <Ionicons name="trash-outline" size={15} color={C.danger} />
                 </Pressable>
               </View>
-            );
-          })}
+            </View>
+          ))}
         </View>
 
         <AppButton title="Cerrar sesión" onPress={handleSignOut} variant="danger" />
@@ -343,46 +338,113 @@ export default function PerfilScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1F2430' },
+  container: { flex: 1, backgroundColor: C.bg },
   content: { padding: 20, paddingBottom: 40 },
   header: { marginBottom: 24 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  title: { fontSize: 28, fontWeight: '800', color: '#F5F0EB' },
-  alias: { fontSize: 16, color: '#6B7280', marginTop: 2 },
-  ratingBox: { alignItems: 'center', backgroundColor: '#252B3B', borderRadius: 12, padding: 10 },
-  ratingStars: { fontSize: 16, color: '#F0A868', letterSpacing: 2 },
-  ratingVal: { fontSize: 13, color: '#9CA3AF', marginTop: 2, fontWeight: '700' },
-  section: { backgroundColor: '#252B3B', borderRadius: 16, padding: 16, marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#F5F0EB', marginBottom: 14 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  grupoActions: { flexDirection: 'row', gap: 8 },
-  grupoActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#3D2210', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  grupoActionText: { color: '#F0A868', fontWeight: '700', fontSize: 12 },
-  emptyText: { color: '#6B7280', fontSize: 14 },
-  grupoItem: {
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  title: { fontSize: 28, fontWeight: '800', color: C.textPrimary },
+  alias: { fontSize: 16, color: C.textMuted, marginTop: 2 },
+  ratingBox: {
+    alignItems: 'center',
+    backgroundColor: C.surface,
+    borderRadius: 12,
+    padding: 10,
+  },
+  ratingStars: { fontSize: 16, color: C.primary, letterSpacing: 2 },
+  ratingVal: { fontSize: 13, color: C.textSecondary, marginTop: 2, fontWeight: '700' },
+  section: {
+    backgroundColor: C.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    gap: 4,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginBottom: 2 },
+  sectionHint: { fontSize: 12, color: C.textMuted, marginBottom: 12, lineHeight: 17 },
+  addAlbumBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    gap: 4,
+    backgroundColor: C.primaryDark,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  addAlbumText: { color: C.primary, fontWeight: '700', fontSize: 12 },
+  emptyAlbums: { alignItems: 'center', gap: 8, paddingVertical: 16 },
+  emptyAlbumsText: {
+    color: C.textMuted,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  albumItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#2E3650',
+    borderTopColor: C.border,
     gap: 8,
   },
-  grupoInfo: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  grupoInfoText: { flex: 1 },
-  grupoNombre: { fontSize: 14, fontWeight: '600', color: '#F5F0EB' },
-  grupoMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
-  grupoCodigo: { fontSize: 11, color: '#6B7280', letterSpacing: 1 },
-  creadorBadge: { backgroundColor: '#3D2210', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 10 },
-  creadorText: { fontSize: 10, color: '#F0A868', fontWeight: '700' },
-  grupoActionIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  grupoDeleteIcon: { backgroundColor: '#2d0a0a' },
-  grupoLeaveIcon: { backgroundColor: '#1a1200' },
+  albumItemActive: { borderTopColor: `${C.accent}44` },
+  albumMain: { flex: 1 },
+  albumInfo: { gap: 2 },
+  activeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginBottom: 2,
+  },
+  activeBadgeText: { fontSize: 10, color: C.accent, fontWeight: '700', textTransform: 'uppercase' },
+  albumNombre: { fontSize: 14, fontWeight: '700', color: C.textSecondary },
+  albumNombreActive: { color: C.textPrimary },
+  albumStats: { fontSize: 11, color: C.textMuted, marginTop: 1 },
+  activarText: { fontSize: 11, color: C.primary, fontWeight: '600', marginTop: 2 },
+  albumActions: { flexDirection: 'row', gap: 4 },
+  albumActionBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: C.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalCard: { backgroundColor: '#252B3B', borderRadius: 20, padding: 24, width: '100%', gap: 12 },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: '#F5F0EB' },
-  modalSubtitle: { fontSize: 13, color: '#9CA3AF' },
-  modalInput: { backgroundColor: '#1F2430', color: '#F5F0EB', borderRadius: 10, padding: 14, fontSize: 18, fontWeight: '700', borderWidth: 1, borderColor: '#F0A86855', letterSpacing: 4, textAlign: 'center' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: C.surface,
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    gap: 12,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: C.textPrimary },
+  modalSubtitle: { fontSize: 13, color: C.textSecondary, lineHeight: 18 },
+  modalInput: {
+    backgroundColor: C.bg,
+    color: C.textPrimary,
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: `${C.primary}55`,
+  },
   modalCancel: { alignItems: 'center', paddingVertical: 10 },
-  modalCancelText: { color: '#6B7280', fontSize: 14 },
+  modalCancelText: { color: C.textMuted, fontSize: 14 },
 });

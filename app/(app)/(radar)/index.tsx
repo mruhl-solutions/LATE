@@ -551,8 +551,8 @@ export default function RadarScreen() {
           >
             <EmptyState
               icon="albums-outline"
-              title="Tu inventario está vacío"
-              subtitle="Andá a Perfil, cargá tus figuritas faltantes y repetidas, y volvé al radar."
+              title="Cargá tu inventario primero"
+              subtitle="Andá a Perfil, cargá lo que necesitás y lo que tenés repetido, y volvé al radar."
               action={{ label: 'Buscar de nuevo', onPress: buscarMatches }}
             />
           </ScrollView>

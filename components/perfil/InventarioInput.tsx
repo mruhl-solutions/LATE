@@ -48,7 +48,7 @@ export function InventarioInput({
         onChangeText={onChangeText}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholder="Ej: 12, 45, 102, 300"
+        placeholder="Ej: 12, 45, ARG102, 300"
         placeholderTextColor={C.textMuted}
         keyboardType="numbers-and-punctuation"
         multiline

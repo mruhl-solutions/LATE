@@ -25,14 +25,14 @@ export function useProfile() {
   }, [user]);
 
   const updateInventario = useCallback(
-    async (faltantes: string[], repetidas: string[]) => {
+    async (necesito: string[], repetidas: string[]) => {
       if (!user) return;
       const { error: err } = await supabase
         .from('profiles')
-        .update({ faltantes, repetidas })
+        .update({ necesito, repetidas })
         .eq('id', user.id);
       if (err) throw err;
-      setProfile((prev) => (prev ? { ...prev, faltantes, repetidas } : prev));
+      setProfile((prev) => (prev ? { ...prev, necesito, repetidas } : prev));
     },
     [user],
   );
@@ -56,7 +56,7 @@ export function useProfile() {
         .insert({
           user_id: user.id,
           nombre,
-          faltantes: [],
+          necesito: [],
           repetidas: [],
           is_active: albums.length === 0,
         })
@@ -70,11 +70,11 @@ export function useProfile() {
   );
 
   const actualizarAlbum = useCallback(
-    async (albumId: string, nombre?: string, faltantes?: string[], repetidas?: string[], total_figuritas?: number) => {
+    async (albumId: string, nombre?: string, necesito?: string[], repetidas?: string[], total_figuritas?: number) => {
       if (!user) return;
       const updates: Record<string, unknown> = {};
       if (nombre) updates.nombre = nombre;
-      if (faltantes) updates.faltantes = faltantes;
+      if (necesito) updates.necesito = necesito;
       if (repetidas) updates.repetidas = repetidas;
       if (total_figuritas) updates.total_figuritas = total_figuritas;
 

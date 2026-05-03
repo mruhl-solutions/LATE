@@ -40,13 +40,13 @@ export function useRadar() {
       // Verificar si el inventario propio está vacío antes de buscar
       const { data: perfil } = await supabase
         .from('profiles')
-        .select('faltantes, repetidas')
+        .select('necesito, repetidas')
         .eq('id', user.id)
         .single();
 
       if (
         perfil &&
-        perfil.faltantes.length === 0 &&
+        perfil.necesito.length === 0 &&
         perfil.repetidas.length === 0
       ) {
         setInventarioVacio(true);

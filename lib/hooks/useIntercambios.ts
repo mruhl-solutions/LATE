@@ -16,6 +16,8 @@ export function useIntercambios() {
   const [negociaciones, setNegociaciones] = useState<IntercambioConAlias[]>([]);
   const [completados, setCompletados] = useState<IntercambioConAlias[]>([]);
   const [historial, setHistorial] = useState<IntercambioConAlias[]>([]);
+  const [recibidas, setRecibidas] = useState<IntercambioConAlias[]>([]);
+  const [enviadas, setEnviadas] = useState<IntercambioConAlias[]>([]);
   const [loading, setLoading] = useState(false);
 
   /**
@@ -27,6 +29,24 @@ export function useIntercambios() {
     setLoading(true);
 
     try {
+      // Propuestas pendientes (estado = iniciado)
+      const [recv, sent] = await Promise.all([
+        supabase
+          .from('intercambios')
+          .select('*, iniciador:profiles!iniciador_id(alias)')
+          .eq('receptor_id', user.id)
+          .eq('estado', 'iniciado')
+          .order('updated_at', { ascending: false }),
+        supabase
+          .from('intercambios')
+          .select('*, receptor:profiles!receptor_id(alias)')
+          .eq('iniciador_id', user.id)
+          .eq('estado', 'iniciado')
+          .order('updated_at', { ascending: false }),
+      ]);
+      setRecibidas((recv.data as IntercambioConAlias[]) ?? []);
+      setEnviadas((sent.data as IntercambioConAlias[]) ?? []);
+
       // Obtener todos los intercambios activos/en negociación
       const { data: activos } = await supabase
         .from('intercambios')
@@ -199,6 +219,8 @@ export function useIntercambios() {
     negociaciones,
     completados,
     historial,
+    recibidas,
+    enviadas,
     loading,
     fetchAll,
     crearIntercambio,

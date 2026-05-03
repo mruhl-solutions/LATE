@@ -2,31 +2,18 @@ import { View, Text, StyleSheet } from 'react-native';
 import { C } from '@/constants/colors';
 
 interface AlbumStatsProps {
-  faltantes: number;
+  necesito: number;
   repetidas: number;
-  totalFiguritas: number;
+  nombre?: string;
 }
 
-export function AlbumStats({ faltantes, repetidas, totalFiguritas }: AlbumStatsProps) {
-  const total = totalFiguritas > 0 ? totalFiguritas : 1;
-  const completadas = Math.max(0, total - faltantes);
-  const pct = Math.max(0, Math.min(1, completadas / total));
-
+export function AlbumStats({ necesito, repetidas, nombre }: AlbumStatsProps) {
   return (
     <View style={styles.container}>
+      {nombre && <Text style={styles.nombre}>{nombre}</Text>}
       <View style={styles.row}>
-        <StatChip value={completadas} label="Tengo" color={C.accent} />
-        <StatChip value={faltantes} label="Me faltan" color={C.info} />
+        <StatChip value={necesito} label="Necesito" color={C.info} />
         <StatChip value={repetidas} label="Repetidas" color={C.primary} />
-      </View>
-
-      <View style={styles.barTrack}>
-        <View style={[styles.barFill, { width: `${Math.round(pct * 100)}%` }]} />
-      </View>
-
-      <View style={styles.barLabels}>
-        <Text style={styles.barPct}>{Math.round(pct * 100)}% completado</Text>
-        <Text style={styles.barTotal}>{completadas} / {totalFiguritas}</Text>
       </View>
     </View>
   );
@@ -42,21 +29,24 @@ function StatChip({ value, label, color }: { value: number; label: string; color
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 20, gap: 10 },
+  container: { marginBottom: 16, gap: 8 },
+  nombre: { fontSize: 13, color: C.textMuted, fontWeight: '600', letterSpacing: 0.3 },
   row: { flexDirection: 'row', gap: 8 },
   chip: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 12,
     backgroundColor: C.bg,
     borderWidth: 1,
   },
-  chipValue: { fontSize: 22, fontWeight: '800', lineHeight: 26 },
-  chipLabel: { fontSize: 10, color: C.textMuted, fontWeight: '600', marginTop: 1, textTransform: 'uppercase', letterSpacing: 0.4 },
-  barTrack: { height: 6, backgroundColor: C.border, borderRadius: 3, overflow: 'hidden' },
-  barFill: { height: '100%', backgroundColor: C.accent, borderRadius: 3 },
-  barLabels: { flexDirection: 'row', justifyContent: 'space-between' },
-  barPct: { fontSize: 11, color: C.accent, fontWeight: '700' },
-  barTotal: { fontSize: 11, color: C.textMuted, fontWeight: '600' },
+  chipValue: { fontSize: 26, fontWeight: '800', lineHeight: 30 },
+  chipLabel: {
+    fontSize: 10,
+    color: C.textMuted,
+    fontWeight: '600',
+    marginTop: 1,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
 });

@@ -9,9 +9,12 @@ import {
   ScrollView,
   Image,
   Alert,
+  Pressable,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import { AppButton } from '@/components/ui/AppButton';
 import { C } from '@/constants/colors';
 
@@ -21,6 +24,8 @@ export default function RegistroScreen() {
   const [alias, setAlias] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [codigoGrupo, setCodigoGrupo] = useState('');
+  const [showGrupoField, setShowGrupoField] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRegistro = async () => {
@@ -36,13 +41,36 @@ export default function RegistroScreen() {
       Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres.');
       return;
     }
+
     setLoading(true);
     try {
       const { needsEmailConfirmation } = await signUp(email.trim(), password, alias.trim());
+
+      const codigoNorm = codigoGrupo.trim().toLowerCase();
+
+      if (!needsEmailConfirmation && codigoNorm) {
+        // Tenemos sesión activa: intentar unirse al grupo
+        const { data: grupo, error: gErr } = await supabase
+          .from('grupos')
+          .select('id')
+          .eq('codigo', codigoNorm)
+          .single();
+
+        if (!gErr && grupo) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from('grupo_miembros').insert({
+              grupo_id: grupo.id,
+              usuario_id: user.id,
+            });
+          }
+        }
+      }
+
       if (needsEmailConfirmation) {
         Alert.alert(
           'Revisá tu email',
-          'Te enviamos un link de confirmación. Una vez confirmado, ingresá con tu email y contraseña.',
+          `Te enviamos un link de confirmación. Una vez confirmado, ingresá con tu email y contraseña.${codigoNorm ? '\n\nPodés unirte al grupo desde la pestaña Radar después de confirmar tu cuenta.' : ''}`,
           [{ text: 'Entendido', onPress: () => router.replace('/(auth)/login') }],
         );
       }
@@ -106,6 +134,37 @@ export default function RegistroScreen() {
             onChangeText={setPassword}
           />
 
+          {/* Código de grupo opcional */}
+          {!showGrupoField ? (
+            <Pressable style={styles.grupoToggle} onPress={() => setShowGrupoField(true)}>
+              <Ionicons name="people-outline" size={16} color={C.primary} />
+              <Text style={styles.grupoToggleText}>¿Tenés un código de grupo?</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.grupoInputWrap}>
+              <View style={styles.grupoInputHeader}>
+                <Ionicons name="people-outline" size={16} color={C.primary} />
+                <Text style={styles.grupoInputLabel}>Código de grupo (opcional)</Text>
+                <Pressable onPress={() => { setShowGrupoField(false); setCodigoGrupo(''); }}>
+                  <Ionicons name="close-circle-outline" size={18} color={C.textMuted} />
+                </Pressable>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Ej: a3f92c"
+                placeholderTextColor={C.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={codigoGrupo}
+                onChangeText={setCodigoGrupo}
+                maxLength={12}
+              />
+              <Text style={styles.grupoHint}>
+                Vas a ser parte del grupo apenas te registres.
+              </Text>
+            </View>
+          )}
+
           <AppButton title="Crear cuenta" onPress={handleRegistro} loading={loading} />
 
           <Link href="/(auth)/login" style={styles.link}>
@@ -157,6 +216,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: C.border,
+  },
+  grupoToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginBottom: 4,
+  },
+  grupoToggleText: {
+    color: C.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  grupoInputWrap: { gap: 4, marginBottom: 4 },
+  grupoInputHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  grupoInputLabel: {
+    flex: 1,
+    color: C.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  grupoHint: {
+    fontSize: 12,
+    color: C.textMuted,
+    paddingHorizontal: 4,
+    marginBottom: 10,
   },
   link: { marginTop: 20, alignSelf: 'center' },
   linkText: { color: C.primary, fontSize: 15 },

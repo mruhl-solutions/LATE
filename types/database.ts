@@ -14,7 +14,7 @@ export interface Database {
           alias: string;
           ubicacion: unknown | null;
           radio_km: number;
-          faltantes: string[];
+          necesito: string[];
           repetidas: string[];
           visible_radar: boolean;
           total_figuritas: number;
@@ -26,7 +26,7 @@ export interface Database {
           alias: string;
           ubicacion?: unknown | null;
           radio_km?: number;
-          faltantes?: string[];
+          necesito?: string[];
           repetidas?: string[];
           visible_radar?: boolean;
           total_figuritas?: number;
@@ -35,7 +35,7 @@ export interface Database {
           alias?: string;
           ubicacion?: unknown | null;
           radio_km?: number;
-          faltantes?: string[];
+          necesito?: string[];
           repetidas?: string[];
           visible_radar?: boolean;
           total_figuritas?: number;
@@ -46,7 +46,7 @@ export interface Database {
           id: string;
           user_id: string;
           nombre: string;
-          faltantes: string[];
+          necesito: string[];
           repetidas: string[];
           total_figuritas: number;
           is_active: boolean;
@@ -57,14 +57,14 @@ export interface Database {
           id?: string;
           user_id: string;
           nombre: string;
-          faltantes?: string[];
+          necesito?: string[];
           repetidas?: string[];
           total_figuritas?: number;
           is_active?: boolean;
         };
         Update: {
           nombre?: string;
-          faltantes?: string[];
+          necesito?: string[];
           repetidas?: string[];
           total_figuritas?: number;
           is_active?: boolean;

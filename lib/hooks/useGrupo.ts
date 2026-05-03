@@ -104,7 +104,7 @@ export function useGrupo() {
       if (!user) return [];
 
       const [myProfileRes, membersRes] = await Promise.all([
-        supabase.from('profiles').select('faltantes, repetidas').eq('id', user.id).single(),
+        supabase.from('profiles').select('necesito, repetidas').eq('id', user.id).single(),
         supabase.from('grupo_miembros').select('usuario_id').eq('grupo_id', grupoId).neq('usuario_id', user.id),
       ]);
 
@@ -116,18 +116,18 @@ export function useGrupo() {
 
       const { data: memberProfiles } = await supabase
         .from('profiles')
-        .select('id, alias, faltantes, repetidas')
+        .select('id, alias, necesito, repetidas')
         .in('id', memberIds);
 
       if (!memberProfiles) return [];
 
-      const myFaltantesSet = new Set<string>(myProfile.faltantes);
+      const myNecesitoSet = new Set<string>(myProfile.necesito);
       const myRepetidasSet = new Set<string>(myProfile.repetidas);
 
       return memberProfiles
-        .map((p: { id: string; alias: string; faltantes: string[]; repetidas: string[] }) => {
-          const ellos_tienen_yo_busco = p.repetidas.filter((n) => myFaltantesSet.has(n));
-          const yo_tengo_ellos_buscan = p.faltantes.filter((n) => myRepetidasSet.has(n));
+        .map((p: { id: string; alias: string; necesito: string[]; repetidas: string[] }) => {
+          const ellos_tienen_yo_busco = p.repetidas.filter((n) => myNecesitoSet.has(n));
+          const yo_tengo_ellos_buscan = p.necesito.filter((n) => myRepetidasSet.has(n));
           return {
             usuario_id: p.id,
             alias: p.alias,
