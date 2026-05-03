@@ -13,8 +13,6 @@ export default function NegociacionesLayout() {
           headerTintColor: C.primary,
           headerTitleStyle: { color: C.textPrimary, fontWeight: '700' },
           headerShadowVisible: false,
-          headerBackTitle: '',
-          headerBackTitleVisible: false,
         }}
       />
     </Stack>

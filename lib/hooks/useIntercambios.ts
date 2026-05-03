@@ -88,10 +88,10 @@ export function useIntercambios() {
       setCompletados(allComp);
       setHistorial(allCancelados);
 
-      // Agrupar por persona para conversaciones
+      // Agrupar por persona para conversaciones (todos los estados)
       const conversacionesMap = new Map<string, ConversacionInfo>();
 
-      for (const intercambio of allActivos) {
+      for (const intercambio of [...allActivos, ...allComp, ...allCancelados]) {
         const otherUserId =
           intercambio.iniciador_id === user.id
             ? intercambio.receptor_id
@@ -114,7 +114,9 @@ export function useIntercambios() {
         }
 
         const conv = conversacionesMap.get(otherUserId)!;
-        conv.intercambios.push(intercambio);
+        if (!conv.intercambios.some((i) => i.id === intercambio.id)) {
+          conv.intercambios.push(intercambio);
+        }
 
         if (intercambio.updated_at > conv.ultimo_mensaje_fecha) {
           conv.ultimo_mensaje_fecha = intercambio.updated_at;

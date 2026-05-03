@@ -28,6 +28,20 @@ export default function ChatScreen() {
   const { id: recipientId } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
   const user = useAuthStore((s) => s.user);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={{ paddingHorizontal: 4, paddingVertical: 4 }}
+          hitSlop={8}
+        >
+          <Ionicons name="chevron-back" size={28} color={C.primary} />
+        </Pressable>
+      ),
+    });
+  }, [navigation]);
   const { confirmar, cancelar, finalizar, eliminarChat } = useIntercambios();
 
   const [intercambios, setIntercambios] = useState<IntercambioConAlias[]>([]);

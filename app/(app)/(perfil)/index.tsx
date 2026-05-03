@@ -14,7 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useProfile } from '@/lib/hooks/useProfile';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { useCalificacion } from '@/lib/hooks/useCalificacion';
 import { useAuthStore } from '@/store/authStore';
 import { InventarioInput } from '@/components/perfil/InventarioInput';
 import { AlbumStats } from '@/components/perfil/AlbumStats';
@@ -36,13 +35,11 @@ export default function PerfilScreen() {
     eliminarAlbum,
   } = useProfile();
   const { signOut } = useAuth();
-  const { promedioEstrellas } = useCalificacion();
   const user = useAuthStore((s) => s.user);
 
   const [necesitoStr, setNecesitoStr] = useState('');
   const [repetidasStr, setRepetidasStr] = useState('');
   const [saving, setSaving] = useState(false);
-  const [promedio, setPromedio] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   // Album management modals
@@ -55,22 +52,14 @@ export default function PerfilScreen() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([
-      fetchProfile(),
-      fetchAlbums(),
-      user ? promedioEstrellas(user.id).then(setPromedio) : Promise.resolve(),
-    ]);
+    await Promise.all([fetchProfile(), fetchAlbums()]);
     setRefreshing(false);
-  }, [fetchProfile, fetchAlbums, promedioEstrellas, user]);
+  }, [fetchProfile, fetchAlbums]);
 
   useEffect(() => {
     fetchProfile();
     fetchAlbums();
   }, []);
-
-  useEffect(() => {
-    if (user) promedioEstrellas(user.id).then(setPromedio);
-  }, [user]);
 
   useEffect(() => {
     if (profile) {
@@ -159,9 +148,6 @@ export default function PerfilScreen() {
     ]);
   };
 
-  const renderStars = (valor: number) =>
-    [1, 2, 3, 4, 5].map((s) => (s <= Math.round(valor) ? '★' : '☆')).join('');
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Modal: Crear álbum */}
@@ -227,12 +213,6 @@ export default function PerfilScreen() {
               <Text style={styles.title}>Perfil</Text>
               {profile && <Text style={styles.alias}>@{profile.alias}</Text>}
             </View>
-            {promedio !== null && (
-              <View style={styles.ratingBox}>
-                <Text style={styles.ratingStars}>{renderStars(promedio)}</Text>
-                <Text style={styles.ratingVal}>{promedio.toFixed(1)}</Text>
-              </View>
-            )}
           </View>
         </View>
 
@@ -348,14 +328,6 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: '800', color: C.textPrimary },
   alias: { fontSize: 16, color: C.textMuted, marginTop: 2 },
-  ratingBox: {
-    alignItems: 'center',
-    backgroundColor: C.surface,
-    borderRadius: 12,
-    padding: 10,
-  },
-  ratingStars: { fontSize: 16, color: C.primary, letterSpacing: 2 },
-  ratingVal: { fontSize: 13, color: C.textSecondary, marginTop: 2, fontWeight: '700' },
   section: {
     backgroundColor: C.surface,
     borderRadius: 16,
