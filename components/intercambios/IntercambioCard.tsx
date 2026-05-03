@@ -1,7 +1,9 @@
 import { View, Text, StyleSheet, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { EstadoBadge } from './EstadoBadge';
 import { AppButton } from '@/components/ui/AppButton';
 import { arrayToDisplayString } from '@/lib/parsers';
+import { C } from '@/constants/colors';
 import type { IntercambioConAlias } from '@/types/app';
 
 interface IntercambioCardProps {
@@ -19,8 +21,8 @@ export function IntercambioCard({
 }: IntercambioCardProps) {
   const alias =
     perspective === 'receptor'
-      ? intercambio.iniciador?.alias ?? 'Desconocido'
-      : intercambio.receptor?.alias ?? 'Desconocido';
+      ? (intercambio.iniciador as { alias: string } | undefined)?.alias ?? 'Desconocido'
+      : (intercambio.receptor as { alias: string } | undefined)?.alias ?? 'Desconocido';
 
   const confirmAction = (label: string, cb?: () => void) => {
     if (!cb) return;
@@ -30,11 +32,15 @@ export function IntercambioCard({
     ]);
   };
 
+  // Labels según perspectiva
+  const labelPedidos  = perspective === 'receptor' ? 'Necesitan' : 'Necesito';
+  const labelOfrece   = perspective === 'receptor' ? 'Te ofrecen' : 'Ofrezco';
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.alias}>{alias}</Text>
+          <Text style={styles.alias}>@{alias}</Text>
           <Text style={styles.date}>
             {new Date(intercambio.created_at).toLocaleDateString('es-AR')}
           </Text>
@@ -42,21 +48,23 @@ export function IntercambioCard({
         <EstadoBadge estado={intercambio.estado} />
       </View>
 
-      <View style={styles.numerosRow}>
-        <View style={styles.numerosCol}>
-          <Text style={styles.numerosLabel}>
-            {perspective === 'receptor' ? 'Ellos quieren' : 'Vos pediste'}
-          </Text>
+      <View style={styles.numerosGrid}>
+        <View style={[styles.numerosCol, styles.colLeft]}>
+          <View style={styles.colHeader}>
+            <Ionicons name="search-outline" size={12} color={C.info} />
+            <Text style={[styles.numerosLabel, { color: C.info }]}>{labelPedidos}</Text>
+          </View>
           <Text style={styles.numeros}>
             {intercambio.numeros_pedidos.length > 0
               ? arrayToDisplayString(intercambio.numeros_pedidos)
               : '—'}
           </Text>
         </View>
-        <View style={styles.numerosCol}>
-          <Text style={styles.numerosLabel}>
-            {perspective === 'receptor' ? 'Ellos ofrecen' : 'Vos ofreciste'}
-          </Text>
+        <View style={[styles.numerosCol, styles.colRight]}>
+          <View style={styles.colHeader}>
+            <Ionicons name="copy-outline" size={12} color={C.primary} />
+            <Text style={[styles.numerosLabel, { color: C.primary }]}>{labelOfrece}</Text>
+          </View>
           <Text style={styles.numeros}>
             {intercambio.numeros_ofrecidos.length > 0
               ? arrayToDisplayString(intercambio.numeros_ofrecidos)
@@ -90,10 +98,12 @@ export function IntercambioCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1F2937',
+    backgroundColor: C.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: C.border,
   },
   header: {
     flexDirection: 'row',
@@ -101,12 +111,23 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 12,
   },
-  alias: { fontSize: 16, fontWeight: '700', color: '#F9FAFB' },
-  date: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  numerosRow: { flexDirection: 'row', gap: 12, marginBottom: 14 },
-  numerosCol: { flex: 1 },
-  numerosLabel: { fontSize: 11, color: '#6B7280', marginBottom: 4, textTransform: 'uppercase' },
-  numeros: { fontSize: 13, color: '#9CA3AF', lineHeight: 18 },
+  alias: { fontSize: 16, fontWeight: '700', color: C.textPrimary },
+  date: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  numerosGrid: {
+    flexDirection: 'row',
+    backgroundColor: C.bg,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+    overflow: 'hidden',
+    marginBottom: 14,
+  },
+  numerosCol: { flex: 1, padding: 10, gap: 6 },
+  colLeft: { borderRightWidth: 1, borderRightColor: C.border },
+  colRight: {},
+  colHeader: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  numerosLabel: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
+  numeros: { fontSize: 12, color: C.textSecondary, lineHeight: 17 },
   actions: { flexDirection: 'row', gap: 8 },
   flex: { flex: 1 },
 });

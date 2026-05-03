@@ -78,13 +78,13 @@ export default function ProponerScreen() {
         <View style={styles.arrowLine} />
       </View>
 
-      {/* Panel: Vos recibís */}
+      {/* Panel: Quiero */}
       <View style={[styles.panel, styles.panelBlue]}>
         <View style={styles.panelHeader}>
           <Ionicons name="arrow-down-circle" size={18} color="#7BAFD4" />
           <View>
-            <Text style={styles.panelDirection}>Vos recibís de @{alias ?? '...'}</Text>
-            <Text style={styles.panelHint}>Figuritas que @{alias ?? '...'} tiene y vos buscás</Text>
+            <Text style={styles.panelDirection}>Quiero recibir de @{alias ?? '...'}</Text>
+            <Text style={styles.panelHint}>Figuritas que @{alias ?? '...'} tiene y vos necesitás</Text>
           </View>
           <View style={[styles.countBadge, { backgroundColor: '#7BAFD422' }]}>
             <Text style={[styles.countText, { color: '#7BAFD4' }]}>{reciboCount}</Text>
@@ -94,7 +94,7 @@ export default function ProponerScreen() {
           style={[styles.input, { borderColor: '#3B82F644' }]}
           value={recibo}
           onChangeText={setRecibo}
-          placeholder="Ej: 12, 45, 102"
+          placeholder="Ej: 12, 45, ARG102"
           placeholderTextColor="#4B5563"
           keyboardType="numbers-and-punctuation"
           multiline
@@ -103,12 +103,12 @@ export default function ProponerScreen() {
         />
       </View>
 
-      {/* Panel: Vos das */}
+      {/* Panel: Doy */}
       <View style={[styles.panel, styles.panelAmber]}>
         <View style={styles.panelHeader}>
           <Ionicons name="arrow-up-circle" size={18} color="#F59E0B" />
           <View>
-            <Text style={styles.panelDirection}>Vos le das a @{alias ?? '...'}</Text>
+            <Text style={styles.panelDirection}>Doy a @{alias ?? '...'}</Text>
             <Text style={styles.panelHint}>Tus repetidas que @{alias ?? '...'} necesita</Text>
           </View>
           <View style={[styles.countBadge, { backgroundColor: '#3D221022' }]}>
@@ -119,7 +119,7 @@ export default function ProponerScreen() {
           style={[styles.input, { borderColor: '#F59E0B44' }]}
           value={doy}
           onChangeText={setDoy}
-          placeholder="Ej: 7, 33, 88"
+          placeholder="Ej: 7, 33, ARG88"
           placeholderTextColor="#4B5563"
           keyboardType="numbers-and-punctuation"
           multiline
@@ -134,10 +134,10 @@ export default function ProponerScreen() {
           <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
           <Text style={styles.resumenText}>
             {reciboCount > 0 && doyCount > 0
-              ? `Recibís ${reciboCount} figurita${reciboCount !== 1 ? 's' : ''} y das ${doyCount}`
+              ? `Querés ${reciboCount} figurita${reciboCount !== 1 ? 's' : ''} y das ${doyCount}`
               : reciboCount > 0
-              ? `Recibís ${reciboCount} figurita${reciboCount !== 1 ? 's' : ''} sin dar nada`
-              : `Dás ${doyCount} figurita${doyCount !== 1 ? 's' : ''} sin recibir nada`}
+              ? `Querés ${reciboCount} figurita${reciboCount !== 1 ? 's' : ''} sin dar nada`
+              : `Das ${doyCount} figurita${doyCount !== 1 ? 's' : ''} sin recibir nada`}
           </Text>
         </View>
       )}

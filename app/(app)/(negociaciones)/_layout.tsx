@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { C } from '@/constants/colors';
 
 export default function NegociacionesLayout() {
   return (
@@ -8,9 +9,10 @@ export default function NegociacionesLayout() {
         name="[id]"
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#1C1C1E' },
-          headerTintColor: '#FF6B35',
-          headerTitleStyle: { color: '#F5F5F5', fontWeight: '700' },
+          headerStyle: { backgroundColor: C.surface },
+          headerTintColor: C.primary,
+          headerTitleStyle: { color: C.textPrimary, fontWeight: '700' },
+          headerShadowVisible: false,
         }}
       />
     </Stack>

@@ -6,18 +6,40 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useIntercambios, type ConversacionInfo } from '@/lib/hooks/useIntercambios';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { C } from '@/constants/colors';
+import { C, Colors } from '@/constants/colors';
+import type { EstadoIntercambio } from '@/types/app';
+import { useAuthStore } from '@/store/authStore';
 
 type Tab = 'activos' | 'completados' | 'cancelados';
 
-const ConversacionCard = ({ conversacion }: { conversacion: ConversacionInfo }) => {
+// Determina el estado más relevante de una conversación
+function estadoPrioritario(estados: EstadoIntercambio[]): EstadoIntercambio {
+  if (estados.includes('aceptado')) return 'aceptado';
+  if (estados.includes('en_curso')) return 'en_curso';
+  if (estados.includes('iniciado')) return 'iniciado';
+  if (estados.includes('terminado')) return 'terminado';
+  return 'cancelado';
+}
+
+const ESTADO_LABEL: Record<EstadoIntercambio, string> = {
+  iniciado:  'Propuesta pendiente',
+  en_curso:  'En negociación',
+  aceptado:  'Trato acordado',
+  terminado: 'Finalizado',
+  cancelado: 'Cancelado',
+};
+
+const ConversacionCard = ({
+  conversacion,
+}: {
+  conversacion: ConversacionInfo;
+}) => {
   const router = useRouter();
-  const [statusColor, statusText] = useMemo(() => {
-    const estados = conversacion.intercambios.map((i) => i.estado);
-    if (estados.some((e) => e === 'aceptado')) return [C.Primary, 'En trato'];
-    if (estados.some((e) => e === 'en_curso')) return [C.Accent, 'Negociando'];
-    return [C.Secondary, 'Propuesta'];
-  }, [conversacion.intercambios]);
+  const user = useAuthStore((s) => s.user);
+
+  const estados = conversacion.intercambios.map((i) => i.estado);
+  const estado = estadoPrioritario(estados);
+  const color = Colors.estado[estado];
 
   const fecha = new Date(conversacion.ultimo_mensaje_fecha);
   const hoy = new Date();
@@ -25,53 +47,88 @@ const ConversacionCard = ({ conversacion }: { conversacion: ConversacionInfo }) 
   ayer.setDate(ayer.getDate() - 1);
 
   let fechaTexto = fecha.toLocaleDateString('es-AR', { month: 'short', day: 'numeric' });
-  if (fecha.toDateString() === hoy.toDateString()) fechaTexto = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  if (fecha.toDateString() === hoy.toDateString())
+    fechaTexto = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
   else if (fecha.toDateString() === ayer.toDateString()) fechaTexto = 'Ayer';
+
+  // Vista previa: tomar el intercambio más reciente y mostrarlo desde perspectiva del usuario
+  const latest = conversacion.intercambios[0];
+  const soyIniciador = latest?.iniciador_id === user?.id;
+  const quiero = soyIniciador ? latest?.numeros_pedidos : latest?.numeros_ofrecidos;
+  const doy    = soyIniciador ? latest?.numeros_ofrecidos : latest?.numeros_pedidos;
 
   return (
     <Pressable
-      style={styles.card}
+      style={[styles.card, { borderLeftColor: color }]}
       onPress={() => router.push(`/(negociaciones)/${conversacion.usuario_id}`)}
+      android_ripple={{ color: `${C.primary}22` }}
     >
-      <View style={styles.cardContent}>
-        <View style={styles.cardLeft}>
-          <Text style={styles.alias}>@{conversacion.alias}</Text>
-          <View style={styles.statusBadge}>
-            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-            <Text style={styles.statusText}>{statusText}</Text>
-            <Text style={styles.countText}>({conversacion.intercambios.length})</Text>
-          </View>
-        </View>
+      {/* Fila superior: alias + fecha */}
+      <View style={styles.cardTop}>
+        <Text style={styles.alias}>@{conversacion.alias}</Text>
         <Text style={styles.fecha}>{fechaTexto}</Text>
       </View>
-      <View style={styles.numerosPreview}>
-        {conversacion.intercambios.map((inter) => (
-          <View key={inter.id} style={styles.interPreview}>
-            {inter.numeros_pedidos.length > 0 && (
-              <Text style={styles.previewText}>Pide: {inter.numeros_pedidos.slice(0, 2).join(', ')}{inter.numeros_pedidos.length > 2 ? '...' : ''}</Text>
-            )}
-            {inter.numeros_ofrecidos.length > 0 && (
-              <Text style={styles.previewText}>Ofrece: {inter.numeros_ofrecidos.slice(0, 2).join(', ')}{inter.numeros_ofrecidos.length > 2 ? '...' : ''}</Text>
-            )}
+
+      {/* Estado + contador */}
+      <View style={styles.estadoRow}>
+        <View style={[styles.estadoDot, { backgroundColor: color }]} />
+        <Text style={[styles.estadoText, { color }]}>{ESTADO_LABEL[estado]}</Text>
+        {conversacion.intercambios.length > 1 && (
+          <View style={styles.countBubble}>
+            <Text style={styles.countBubbleText}>{conversacion.intercambios.length}</Text>
           </View>
-        ))}
+        )}
       </View>
+
+      {/* Preview del intercambio más reciente */}
+      {latest && (quiero?.length > 0 || doy?.length > 0) && (
+        <View style={styles.preview}>
+          {quiero?.length > 0 && (
+            <View style={styles.previewRow}>
+              <Ionicons name="arrow-down-circle" size={11} color={C.info} />
+              <Text style={styles.previewLabel}>Quiero</Text>
+              <Text style={styles.previewNums} numberOfLines={1}>
+                {quiero.slice(0, 4).join(', ')}{quiero.length > 4 ? ` +${quiero.length - 4}` : ''}
+              </Text>
+            </View>
+          )}
+          {doy?.length > 0 && (
+            <View style={styles.previewRow}>
+              <Ionicons name="arrow-up-circle" size={11} color={C.primary} />
+              <Text style={styles.previewLabel}>Doy</Text>
+              <Text style={styles.previewNums} numberOfLines={1}>
+                {doy.slice(0, 4).join(', ')}{doy.length > 4 ? ` +${doy.length - 4}` : ''}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
     </Pressable>
   );
 };
 
 export default function NegociacionesScreen() {
-  const { conversaciones, negociaciones, completados, historial, loading, fetchAll } = useIntercambios();
+  const { conversaciones, loading, fetchAll } = useIntercambios();
   const [tab, setTab] = useState<Tab>('activos');
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   const currentData = useMemo(() => {
-    if (tab === 'activos') return conversaciones;
-    if (tab === 'completados') return conversaciones.filter((c) => c.intercambios.every((i) => i.estado === 'terminado'));
-    return conversaciones.filter((c) => c.intercambios.every((i) => i.estado === 'cancelado'));
+    switch (tab) {
+      case 'activos':
+        return conversaciones.filter((c) =>
+          c.intercambios.some((i) => i.estado !== 'terminado' && i.estado !== 'cancelado')
+        );
+      case 'completados':
+        return conversaciones.filter((c) =>
+          c.intercambios.some((i) => i.estado === 'terminado') &&
+          !c.intercambios.some((i) => i.estado !== 'terminado' && i.estado !== 'cancelado')
+        );
+      default:
+        return conversaciones.filter((c) =>
+          c.intercambios.every((i) => i.estado === 'cancelado')
+        );
+    }
   }, [conversaciones, tab]);
 
   const renderConversacion = useCallback(
@@ -79,44 +136,37 @@ export default function NegociacionesScreen() {
     [],
   );
 
-  const activeCount = conversaciones.filter((c) => c.intercambios.some((i) => i.estado !== 'terminado' && i.estado !== 'cancelado')).length;
+  const activeCount = conversaciones.filter((c) =>
+    c.intercambios.some((i) => i.estado !== 'terminado' && i.estado !== 'cancelado')
+  ).length;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.title}>Chats</Text>
 
       <View style={styles.tabs}>
-        <Pressable
-          style={[styles.tab, tab === 'activos' && styles.tabActive]}
-          onPress={() => setTab('activos')}
-        >
-          <Text style={[styles.tabText, tab === 'activos' && styles.tabTextActive]}>
-            Activos{activeCount > 0 ? ` (${activeCount})` : ''}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, tab === 'completados' && styles.tabActive]}
-          onPress={() => setTab('completados')}
-        >
-          <Text style={[styles.tabText, tab === 'completados' && styles.tabTextActive]}>
-            Completados
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, tab === 'cancelados' && styles.tabActive]}
-          onPress={() => setTab('cancelados')}
-        >
-          <Text style={[styles.tabText, tab === 'cancelados' && styles.tabTextActive]}>
-            Cancelados
-          </Text>
-        </Pressable>
+        {(['activos', 'completados', 'cancelados'] as Tab[]).map((t) => (
+          <Pressable
+            key={t}
+            style={[styles.tab, tab === t && styles.tabActive]}
+            onPress={() => setTab(t)}
+          >
+            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+              {t === 'activos'
+                ? `Activos${activeCount > 0 ? ` (${activeCount})` : ''}`
+                : t === 'completados'
+                ? 'Completados'
+                : 'Cancelados'}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
       <FlashList
         data={currentData}
         renderItem={renderConversacion}
         keyExtractor={(item) => item.usuario_id}
-        estimatedItemSize={100}
+        estimatedItemSize={110}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchAll} />}
         ListEmptyComponent={
@@ -134,7 +184,7 @@ export default function NegociacionesScreen() {
               }
               subtitle={
                 tab === 'activos'
-                  ? 'Cuando aceptes una propuesta, aparecerán aquí.'
+                  ? 'Cuando te propongan o acepten un intercambio, aparecerá aquí.'
                   : tab === 'completados'
                   ? 'Los intercambios exitosos aparecerán acá.'
                   : 'Los intercambios cancelados aparecerán acá.'
@@ -175,28 +225,44 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 12, fontWeight: '600', color: C.textMuted },
   tabTextActive: { color: '#fff' },
   list: { padding: 16 },
+
+  // Card
   card: {
     backgroundColor: C.surface,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
     borderLeftWidth: 3,
-    borderLeftColor: C.primary,
+    gap: 6,
   },
-  cardContent: {
+  cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  cardLeft: { flex: 1 },
-  alias: { fontSize: 15, fontWeight: '700', color: C.textPrimary, marginBottom: 4 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: { fontSize: 12, fontWeight: '600', color: C.textSecondary },
-  countText: { fontSize: 12, color: C.textMuted },
-  fecha: { fontSize: 12, color: C.textMuted },
-  numerosPreview: { gap: 6 },
-  interPreview: { gap: 2 },
-  previewText: { fontSize: 11, color: C.textMuted, fontWeight: '500' },
+  alias: { fontSize: 15, fontWeight: '700', color: C.textPrimary },
+  fecha: { fontSize: 11, color: C.textMuted },
+  estadoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  estadoDot: { width: 7, height: 7, borderRadius: 4 },
+  estadoText: { fontSize: 12, fontWeight: '600' },
+  countBubble: {
+    marginLeft: 4,
+    backgroundColor: C.border,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 10,
+  },
+  countBubbleText: { fontSize: 10, color: C.textSecondary, fontWeight: '700' },
+
+  // Preview del intercambio
+  preview: {
+    gap: 3,
+    marginTop: 2,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+  },
+  previewRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  previewLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted, width: 34 },
+  previewNums: { flex: 1, fontSize: 11, color: C.textSecondary },
 });
