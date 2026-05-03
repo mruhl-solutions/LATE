@@ -73,7 +73,7 @@ export default function ProponerScreen() {
       <View style={styles.arrowRow}>
         <View style={styles.arrowLine} />
         <View style={styles.arrowIcon}>
-          <Ionicons name="swap-horizontal" size={20} color="#7C3AED" />
+          <Ionicons name="swap-horizontal" size={20} color="#F0A868" />
         </View>
         <View style={styles.arrowLine} />
       </View>
@@ -81,13 +81,13 @@ export default function ProponerScreen() {
       {/* Panel: Vos recibís */}
       <View style={[styles.panel, styles.panelBlue]}>
         <View style={styles.panelHeader}>
-          <Ionicons name="arrow-down-circle" size={18} color="#3B82F6" />
+          <Ionicons name="arrow-down-circle" size={18} color="#7BAFD4" />
           <View>
             <Text style={styles.panelDirection}>Vos recibís de @{alias ?? '...'}</Text>
             <Text style={styles.panelHint}>Figuritas que @{alias ?? '...'} tiene y vos buscás</Text>
           </View>
-          <View style={[styles.countBadge, { backgroundColor: '#1d4ed822' }]}>
-            <Text style={[styles.countText, { color: '#3B82F6' }]}>{reciboCount}</Text>
+          <View style={[styles.countBadge, { backgroundColor: '#7BAFD422' }]}>
+            <Text style={[styles.countText, { color: '#7BAFD4' }]}>{reciboCount}</Text>
           </View>
         </View>
         <TextInput
@@ -111,8 +111,8 @@ export default function ProponerScreen() {
             <Text style={styles.panelDirection}>Vos le das a @{alias ?? '...'}</Text>
             <Text style={styles.panelHint}>Tus repetidas que @{alias ?? '...'} necesita</Text>
           </View>
-          <View style={[styles.countBadge, { backgroundColor: '#92400e22' }]}>
-            <Text style={[styles.countText, { color: '#F59E0B' }]}>{doyCount}</Text>
+          <View style={[styles.countBadge, { backgroundColor: '#3D221022' }]}>
+            <Text style={[styles.countText, { color: '#F0A868' }]}>{doyCount}</Text>
           </View>
         </View>
         <TextInput
@@ -148,19 +148,19 @@ export default function ProponerScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111827' },
+  container: { flex: 1, backgroundColor: '#1F2430' },
   content: { padding: 20, paddingBottom: 40, gap: 16 },
-  title: { fontSize: 22, fontWeight: '800', color: '#F9FAFB' },
+  title: { fontSize: 22, fontWeight: '800', color: '#F5F0EB' },
   subtitle: { fontSize: 15, color: '#9CA3AF', marginTop: -8 },
-  aliasText: { color: '#7C3AED', fontWeight: '700' },
+  aliasText: { color: '#F0A868', fontWeight: '700' },
   arrowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  arrowLine: { flex: 1, height: 1, backgroundColor: '#374151' },
+  arrowLine: { flex: 1, height: 1, backgroundColor: '#2E3650' },
   arrowIcon: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#2e1065', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#3D2210', alignItems: 'center', justifyContent: 'center',
   },
   panel: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#252B3B',
     borderRadius: 16,
     padding: 16,
     gap: 10,
@@ -169,13 +169,13 @@ const styles = StyleSheet.create({
   panelBlue: { borderColor: '#3B82F622' },
   panelAmber: { borderColor: '#F59E0B22' },
   panelHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  panelDirection: { fontSize: 14, fontWeight: '700', color: '#F9FAFB' },
+  panelDirection: { fontSize: 14, fontWeight: '700', color: '#F5F0EB' },
   panelHint: { fontSize: 11, color: '#6B7280', marginTop: 1 },
   countBadge: { marginLeft: 'auto', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 12 },
   countText: { fontSize: 13, fontWeight: '800' },
   input: {
-    backgroundColor: '#111827',
-    color: '#F9FAFB',
+    backgroundColor: '#1F2430',
+    color: '#F5F0EB',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#252B3B',
     borderRadius: 10,
     padding: 12,
   },

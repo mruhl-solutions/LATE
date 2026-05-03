@@ -141,7 +141,7 @@ export default function RadarScreen() {
                 style={styles.radioStepBtn}
                 onPress={() => { const v = parseInt(radioInput, 10); if (!isNaN(v) && v > 1) setRadioInput(String(v - 1)); }}
               >
-                <Ionicons name="remove" size={20} color="#F9FAFB" />
+                <Ionicons name="remove" size={20} color="#F5F0EB" />
               </Pressable>
               <TextInput
                 style={styles.radioInput}
@@ -155,7 +155,7 @@ export default function RadarScreen() {
                 style={styles.radioStepBtn}
                 onPress={() => { const v = parseInt(radioInput, 10); if (!isNaN(v) && v < 200) setRadioInput(String(v + 1)); }}
               >
-                <Ionicons name="add" size={20} color="#F9FAFB" />
+                <Ionicons name="add" size={20} color="#F5F0EB" />
               </Pressable>
               <Text style={styles.kmLabel}>km</Text>
             </View>
@@ -174,7 +174,7 @@ export default function RadarScreen() {
         <Text style={styles.title}>Radar</Text>
         {tab === 'global' && isVisible && (
           <Pressable style={styles.radioPill} onPress={() => setRadioModal(true)}>
-            <Ionicons name="navigate-circle-outline" size={14} color="#7C3AED" />
+            <Ionicons name="navigate-circle-outline" size={14} color="#F0A868" />
             <Text style={styles.radioPillText}>{profile?.radio_km ?? '…'} km</Text>
             <Ionicons name="chevron-down" size={12} color="#6B7280" />
           </Pressable>
@@ -209,7 +209,7 @@ export default function RadarScreen() {
           /* Usuario oculto en radar global */
           <ScrollView contentContainerStyle={styles.centered}>
             <View style={styles.hiddenBox}>
-              <Ionicons name="eye-off-outline" size={40} color="#374151" />
+              <Ionicons name="eye-off-outline" size={40} color="#2E3650" />
               <Text style={styles.hiddenTitle}>Estás oculto en el radar</Text>
               <Text style={styles.hiddenSubtitle}>
                 Activá el radar global para aparecer y ver coincidencias cerca tuyo.
@@ -217,12 +217,12 @@ export default function RadarScreen() {
               <View style={styles.toggleRow}>
                 <Text style={styles.toggleLabel}>Activar radar global</Text>
                 {togglingVisible ? (
-                  <ActivityIndicator color="#7C3AED" size="small" />
+                  <ActivityIndicator color="#F0A868" size="small" />
                 ) : (
                   <Switch
                     value={isVisible}
                     onValueChange={handleToggleVisible}
-                    trackColor={{ false: '#374151', true: '#7C3AED' }}
+                    trackColor={{ false: '#2E3650', true: '#F0A868' }}
                     thumbColor="#fff"
                   />
                 )}
@@ -249,12 +249,12 @@ export default function RadarScreen() {
               <View style={styles.visibleToggleBar}>
                 <Text style={styles.visibleToggleLabel}>Visible en el radar</Text>
                 {togglingVisible ? (
-                  <ActivityIndicator color="#7C3AED" size="small" />
+                  <ActivityIndicator color="#F0A868" size="small" />
                 ) : (
                   <Switch
                     value={isVisible}
                     onValueChange={handleToggleVisible}
-                    trackColor={{ false: '#374151', true: '#7C3AED' }}
+                    trackColor={{ false: '#2E3650', true: '#F0A868' }}
                     thumbColor="#fff"
                   />
                 )}
@@ -312,7 +312,7 @@ export default function RadarScreen() {
             {/* Matches del grupo */}
             {loadingGroup ? (
               <View style={styles.centered}>
-                <ActivityIndicator color="#7C3AED" size="large" />
+                <ActivityIndicator color="#F0A868" size="large" />
               </View>
             ) : (
               <FlashList
@@ -344,7 +344,7 @@ export default function RadarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111827' },
+  container: { flex: 1, backgroundColor: '#1F2430' },
   flex: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -354,22 +354,22 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
   },
-  title: { fontSize: 28, fontWeight: '800', color: '#F9FAFB' },
+  title: { fontSize: 28, fontWeight: '800', color: '#F5F0EB' },
   radioPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#2e1065',
+    backgroundColor: '#3D2210',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 20,
   },
-  radioPillText: { fontSize: 13, fontWeight: '700', color: '#A78BFA' },
+  radioPillText: { fontSize: 13, fontWeight: '700', color: '#F4C3A6' },
   tabs: {
     flexDirection: 'row',
     marginHorizontal: 20,
     marginBottom: 4,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#252B3B',
     borderRadius: 12,
     padding: 4,
   },
@@ -382,39 +382,39 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 9,
   },
-  tabActive: { backgroundColor: '#7C3AED' },
+  tabActive: { backgroundColor: '#F0A868' },
   tabText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
   tabTextActive: { color: '#fff' },
   // Global hidden state
   hiddenBox: {
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#252B3B',
     borderRadius: 20,
     padding: 28,
     marginHorizontal: 4,
   },
-  hiddenTitle: { fontSize: 18, fontWeight: '800', color: '#F9FAFB', textAlign: 'center' },
+  hiddenTitle: { fontSize: 18, fontWeight: '800', color: '#F5F0EB', textAlign: 'center' },
   hiddenSubtitle: { fontSize: 13, color: '#6B7280', textAlign: 'center', lineHeight: 19 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginTop: 8,
-    backgroundColor: '#111827',
+    backgroundColor: '#1F2430',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     width: '100%',
     justifyContent: 'space-between',
   },
-  toggleLabel: { fontSize: 14, fontWeight: '600', color: '#F9FAFB' },
+  toggleLabel: { fontSize: 14, fontWeight: '600', color: '#F5F0EB' },
   // Visible toggle bar shown at top of results list
   visibleToggleBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1F2937',
+    backgroundColor: '#252B3B',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -425,32 +425,32 @@ const styles = StyleSheet.create({
   groupPillsWrapper: {
     maxHeight: 58,
     borderBottomWidth: 1,
-    borderBottomColor: '#1F2937',
+    borderBottomColor: '#252B3B',
   },
   groupPills: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
   groupPill: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#252B3B',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: '#2E3650',
   },
-  groupPillActive: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
+  groupPillActive: { backgroundColor: '#F0A868', borderColor: '#F0A868' },
   groupPillText: { fontSize: 13, fontWeight: '600', color: '#9CA3AF' },
   groupPillTextActive: { color: '#fff' },
   list: { padding: 16 },
   centered: { flex: 1, justifyContent: 'center', padding: 20 },
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalCard: { backgroundColor: '#1F2937', borderRadius: 20, padding: 24, width: '100%', gap: 14 },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: '#F9FAFB' },
+  modalCard: { backgroundColor: '#252B3B', borderRadius: 20, padding: 24, width: '100%', gap: 14 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: '#F5F0EB' },
   modalSubtitle: { fontSize: 13, color: '#9CA3AF', lineHeight: 18 },
   radioRow: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' },
-  radioStepBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#374151', alignItems: 'center', justifyContent: 'center' },
-  radioInput: { width: 72, backgroundColor: '#111827', color: '#F9FAFB', borderRadius: 10, borderWidth: 1, borderColor: '#7C3AED55', fontSize: 26, fontWeight: '800', textAlign: 'center', paddingVertical: 8 },
+  radioStepBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2E3650', alignItems: 'center', justifyContent: 'center' },
+  radioInput: { width: 72, backgroundColor: '#1F2430', color: '#F5F0EB', borderRadius: 10, borderWidth: 1, borderColor: '#F0A86855', fontSize: 26, fontWeight: '800', textAlign: 'center', paddingVertical: 8 },
   kmLabel: { fontSize: 16, color: '#9CA3AF', fontWeight: '600' },
-  modalBtn: { backgroundColor: '#7C3AED', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+  modalBtn: { backgroundColor: '#F0A868', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
   modalBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   modalCancel: { alignItems: 'center', paddingVertical: 10 },
   modalCancelText: { color: '#6B7280', fontSize: 14 },

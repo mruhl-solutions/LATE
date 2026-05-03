@@ -226,7 +226,7 @@ export default function PerfilScreen() {
 
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#7C3AED" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#F0A868" />}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -249,7 +249,7 @@ export default function PerfilScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Mi Álbum</Text>
             <Pressable style={styles.grupoActionBtn} onPress={() => setTotalModal(true)}>
-              <Ionicons name="options-outline" size={13} color="#7C3AED" />
+              <Ionicons name="options-outline" size={13} color="#F0A868" />
               <Text style={styles.grupoActionText}>{profile?.total_figuritas ?? 638} fig.</Text>
             </Pressable>
           </View>
@@ -265,7 +265,7 @@ export default function PerfilScreen() {
             icon="bookmark-outline"
             value={faltantesStr}
             onChangeText={setFaltantesStr}
-            accentColor="#3B82F6"
+            accentColor="#7BAFD4"
             savedCount={profile?.faltantes.length ?? 0}
           />
           <InventarioInput
@@ -285,11 +285,11 @@ export default function PerfilScreen() {
             <Text style={styles.sectionTitle}>Mis Grupos</Text>
             <View style={styles.grupoActions}>
               <Pressable style={styles.grupoActionBtn} onPress={() => setJoinModalVisible(true)}>
-                <Ionicons name="enter-outline" size={13} color="#7C3AED" />
+                <Ionicons name="enter-outline" size={13} color="#F0A868" />
                 <Text style={styles.grupoActionText}>Unirse</Text>
               </Pressable>
               <Pressable style={styles.grupoActionBtn} onPress={handleCrearGrupo}>
-                <Ionicons name="add" size={13} color="#7C3AED" />
+                <Ionicons name="add" size={13} color="#F0A868" />
                 <Text style={styles.grupoActionText}>Crear</Text>
               </Pressable>
             </View>
@@ -328,7 +328,7 @@ export default function PerfilScreen() {
                   <Ionicons
                     name={esCreador ? 'trash-outline' : 'exit-outline'}
                     size={16}
-                    color={esCreador ? '#EF4444' : '#F59E0B'}
+                    color={esCreador ? '#EF4444' : '#F0A868'}
                   />
                 </Pressable>
               </View>
@@ -343,46 +343,46 @@ export default function PerfilScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111827' },
+  container: { flex: 1, backgroundColor: '#1F2430' },
   content: { padding: 20, paddingBottom: 40 },
   header: { marginBottom: 24 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  title: { fontSize: 28, fontWeight: '800', color: '#F9FAFB' },
+  title: { fontSize: 28, fontWeight: '800', color: '#F5F0EB' },
   alias: { fontSize: 16, color: '#6B7280', marginTop: 2 },
-  ratingBox: { alignItems: 'center', backgroundColor: '#1F2937', borderRadius: 12, padding: 10 },
-  ratingStars: { fontSize: 16, color: '#FBBF24', letterSpacing: 2 },
+  ratingBox: { alignItems: 'center', backgroundColor: '#252B3B', borderRadius: 12, padding: 10 },
+  ratingStars: { fontSize: 16, color: '#F0A868', letterSpacing: 2 },
   ratingVal: { fontSize: 13, color: '#9CA3AF', marginTop: 2, fontWeight: '700' },
-  section: { backgroundColor: '#1F2937', borderRadius: 16, padding: 16, marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#F9FAFB', marginBottom: 14 },
+  section: { backgroundColor: '#252B3B', borderRadius: 16, padding: 16, marginBottom: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#F5F0EB', marginBottom: 14 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   grupoActions: { flexDirection: 'row', gap: 8 },
-  grupoActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#2e1065', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  grupoActionText: { color: '#7C3AED', fontWeight: '700', fontSize: 12 },
+  grupoActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#3D2210', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  grupoActionText: { color: '#F0A868', fontWeight: '700', fontSize: 12 },
   emptyText: { color: '#6B7280', fontSize: 14 },
   grupoItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#374151',
+    borderTopColor: '#2E3650',
     gap: 8,
   },
   grupoInfo: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   grupoInfoText: { flex: 1 },
-  grupoNombre: { fontSize: 14, fontWeight: '600', color: '#F9FAFB' },
+  grupoNombre: { fontSize: 14, fontWeight: '600', color: '#F5F0EB' },
   grupoMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
   grupoCodigo: { fontSize: 11, color: '#6B7280', letterSpacing: 1 },
-  creadorBadge: { backgroundColor: '#2e1065', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 10 },
-  creadorText: { fontSize: 10, color: '#7C3AED', fontWeight: '700' },
+  creadorBadge: { backgroundColor: '#3D2210', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 10 },
+  creadorText: { fontSize: 10, color: '#F0A868', fontWeight: '700' },
   grupoActionIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   grupoDeleteIcon: { backgroundColor: '#2d0a0a' },
   grupoLeaveIcon: { backgroundColor: '#1a1200' },
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalCard: { backgroundColor: '#1F2937', borderRadius: 20, padding: 24, width: '100%', gap: 12 },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: '#F9FAFB' },
+  modalCard: { backgroundColor: '#252B3B', borderRadius: 20, padding: 24, width: '100%', gap: 12 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: '#F5F0EB' },
   modalSubtitle: { fontSize: 13, color: '#9CA3AF' },
-  modalInput: { backgroundColor: '#111827', color: '#F9FAFB', borderRadius: 10, padding: 14, fontSize: 18, fontWeight: '700', borderWidth: 1, borderColor: '#7C3AED55', letterSpacing: 4, textAlign: 'center' },
+  modalInput: { backgroundColor: '#1F2430', color: '#F5F0EB', borderRadius: 10, padding: 14, fontSize: 18, fontWeight: '700', borderWidth: 1, borderColor: '#F0A86855', letterSpacing: 4, textAlign: 'center' },
   modalCancel: { alignItems: 'center', paddingVertical: 10 },
   modalCancelText: { color: '#6B7280', fontSize: 14 },
 });

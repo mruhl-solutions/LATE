@@ -1,36 +1,40 @@
+// ── New LATE palette ──────────────────────────────────────────
+export const C = {
+  bg:          '#1F2430',
+  surface:     '#252B3B',
+  surfaceDeep: '#1A1F2E',
+
+  primary:      '#F0A868',   // warm peach / orange
+  primaryLight: '#F4C3A6',   // soft peach (secondary)
+  primaryDark:  '#3D2210',   // dark tint bg
+  primaryAlpha: '#F0A86820',
+
+  accent:      '#A8D5B9',    // mint green
+  accentDark:  '#1A2920',
+  accentAlpha: '#A8D5B920',
+
+  info:      '#7BAFD4',      // soft blue
+  infoDark:  '#1A2A3A',
+  infoAlpha: '#7BAFD420',
+
+  border:      '#2E3650',
+  borderLight: '#A8D5B930',
+
+  textPrimary:   '#F5F0EB',  // warm white
+  textSecondary: '#9CA3AF',
+  textMuted:     '#6B7280',
+
+  danger:      '#EF4444',
+  dangerDark:  '#2D0A0A',
+  dangerAlpha: '#EF444420',
+} as const;
+
+// Keep Colors.estado for EstadoBadge (only thing that imported the old Colors)
 export const Colors = {
-  light: {
-    primary: '#7C3AED',
-    background: '#F3F4F6',
-    card: '#FFFFFF',
-    text: '#111827',
-    subtext: '#6B7280',
-    border: '#E5E7EB',
-    success: '#22C55E',
-    warning: '#F59E0B',
-    error: '#EF4444',
-    tabBar: '#FFFFFF',
-    tabBarActive: '#7C3AED',
-    tabBarInactive: '#9CA3AF',
-  },
-  dark: {
-    primary: '#7C3AED',
-    background: '#111827',
-    card: '#1F2937',
-    text: '#F9FAFB',
-    subtext: '#9CA3AF',
-    border: '#374151',
-    success: '#22C55E',
-    warning: '#F59E0B',
-    error: '#EF4444',
-    tabBar: '#1F2937',
-    tabBarActive: '#7C3AED',
-    tabBarInactive: '#6B7280',
-  },
   estado: {
-    iniciado: '#F59E0B',
-    en_curso: '#3B82F6',
-    aceptado: '#22C55E',
+    iniciado:  '#F0A868',
+    en_curso:  '#7BAFD4',
+    aceptado:  '#A8D5B9',
     terminado: '#6B7280',
     cancelado: '#EF4444',
   },

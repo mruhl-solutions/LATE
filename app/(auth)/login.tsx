@@ -6,11 +6,14 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Image,
   Alert,
 } from 'react-native';
 import { Link } from 'expo-router';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { AppButton } from '@/components/ui/AppButton';
+import { C } from '@/constants/colors';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -35,68 +38,100 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.kav}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.inner}>
-        <Text style={styles.logo}>LATE</Text>
-        <Text style={styles.subtitle}>Intercambio de figuritas</Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Logo */}
+        <View style={styles.logoWrap}>
+          <Image
+            source={require('@/assets/images/logo.png')}
+            style={styles.logoImg}
+            resizeMode="contain"
+          />
+          <Text style={styles.appName}>
+            <Text style={styles.nameLA}>LA</Text>
+            <Text style={styles.nameTE}>TE</Text>
+          </Text>
+          <Text style={styles.subtitle}>Intercambio de figuritas</Text>
+        </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#6B7280"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Contraseña"
-          placeholderTextColor="#6B7280"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        {/* Form */}
+        <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor={C.textMuted}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Contraseña"
+            placeholderTextColor={C.textMuted}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
 
-        <AppButton title="Ingresar" onPress={handleLogin} loading={loading} />
+          <AppButton title="Ingresar" onPress={handleLogin} loading={loading} />
 
-        <Link href="/(auth)/registro" style={styles.link}>
-          <Text style={styles.linkText}>¿No tenés cuenta? Registrate</Text>
-        </Link>
-      </View>
+          <Link href="/(auth)/registro" style={styles.link}>
+            <Text style={styles.linkText}>¿No tenés cuenta? Registrate</Text>
+          </Link>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111827' },
-  inner: { flex: 1, justifyContent: 'center', padding: 24 },
-  logo: {
-    fontSize: 56,
-    fontWeight: '900',
-    color: '#7C3AED',
-    textAlign: 'center',
-    letterSpacing: 8,
+  kav: { flex: 1, backgroundColor: C.bg },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 28,
+    paddingBottom: 48,
   },
-  subtitle: {
-    fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
+  logoWrap: {
+    alignItems: 'center',
     marginBottom: 40,
-    marginTop: 4,
   },
+  logoImg: {
+    width: 110,
+    height: 110,
+    marginBottom: 16,
+  },
+  appName: {
+    fontSize: 52,
+    fontWeight: '900',
+    letterSpacing: 6,
+  },
+  nameLA: { color: C.primary },
+  nameTE: { color: C.accent },
+  subtitle: {
+    fontSize: 14,
+    color: C.textMuted,
+    marginTop: 4,
+    letterSpacing: 0.5,
+  },
+  form: { gap: 4 },
   input: {
-    backgroundColor: '#1F2937',
-    color: '#F9FAFB',
-    borderRadius: 12,
+    backgroundColor: C.surface,
+    color: C.textPrimary,
+    borderRadius: 14,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 10,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: C.border,
   },
   link: { marginTop: 20, alignSelf: 'center' },
-  linkText: { color: '#7C3AED', fontSize: 15 },
+  linkText: { color: C.primary, fontSize: 15 },
 });

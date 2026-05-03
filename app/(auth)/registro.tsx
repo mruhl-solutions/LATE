@@ -6,11 +6,14 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Image,
   Alert,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { AppButton } from '@/components/ui/AppButton';
+import { C } from '@/constants/colors';
 
 export default function RegistroScreen() {
   const { signUp } = useAuth();
@@ -43,7 +46,6 @@ export default function RegistroScreen() {
           [{ text: 'Entendido', onPress: () => router.replace('/(auth)/login') }],
         );
       }
-      // Si no hay confirmación, onAuthStateChange dispara la redirección automática
     } catch (e: unknown) {
       Alert.alert('Error al registrarse', e instanceof Error ? e.message : 'Intentá de nuevo.');
     } finally {
@@ -53,77 +55,109 @@ export default function RegistroScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.kav}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.inner}>
-        <Text style={styles.logo}>LATE</Text>
-        <Text style={styles.subtitle}>Crear cuenta</Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Logo */}
+        <View style={styles.logoWrap}>
+          <Image
+            source={require('@/assets/images/logo.png')}
+            style={styles.logoImg}
+            resizeMode="contain"
+          />
+          <Text style={styles.appName}>
+            <Text style={styles.nameLA}>LA</Text>
+            <Text style={styles.nameTE}>TE</Text>
+          </Text>
+          <Text style={styles.subtitle}>Crear cuenta</Text>
+        </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Alias (ej: figuritas_ba)"
-          placeholderTextColor="#6B7280"
-          autoCapitalize="none"
-          value={alias}
-          onChangeText={setAlias}
-          maxLength={24}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#6B7280"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Contraseña (mín. 6 caracteres)"
-          placeholderTextColor="#6B7280"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        {/* Form */}
+        <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder="Alias (ej: figuritas_ba)"
+            placeholderTextColor={C.textMuted}
+            autoCapitalize="none"
+            value={alias}
+            onChangeText={setAlias}
+            maxLength={24}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor={C.textMuted}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Contraseña (mín. 6 caracteres)"
+            placeholderTextColor={C.textMuted}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
 
-        <AppButton title="Crear cuenta" onPress={handleRegistro} loading={loading} />
+          <AppButton title="Crear cuenta" onPress={handleRegistro} loading={loading} />
 
-        <Link href="/(auth)/login" style={styles.link}>
-          <Text style={styles.linkText}>¿Ya tenés cuenta? Ingresá</Text>
-        </Link>
-      </View>
+          <Link href="/(auth)/login" style={styles.link}>
+            <Text style={styles.linkText}>¿Ya tenés cuenta? Ingresá</Text>
+          </Link>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111827' },
-  inner: { flex: 1, justifyContent: 'center', padding: 24 },
-  logo: {
-    fontSize: 56,
+  kav: { flex: 1, backgroundColor: C.bg },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 28,
+    paddingBottom: 48,
+  },
+  logoWrap: {
+    alignItems: 'center',
+    marginBottom: 36,
+  },
+  logoImg: {
+    width: 100,
+    height: 100,
+    marginBottom: 14,
+  },
+  appName: {
+    fontSize: 48,
     fontWeight: '900',
-    color: '#7C3AED',
-    textAlign: 'center',
-    letterSpacing: 8,
+    letterSpacing: 6,
   },
+  nameLA: { color: C.primary },
+  nameTE: { color: C.accent },
   subtitle: {
-    fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginBottom: 40,
+    fontSize: 14,
+    color: C.textMuted,
     marginTop: 4,
+    letterSpacing: 0.5,
   },
+  form: { gap: 4 },
   input: {
-    backgroundColor: '#1F2937',
-    color: '#F9FAFB',
-    borderRadius: 12,
+    backgroundColor: C.surface,
+    color: C.textPrimary,
+    borderRadius: 14,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 10,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: C.border,
   },
   link: { marginTop: 20, alignSelf: 'center' },
-  linkText: { color: '#7C3AED', fontSize: 15 },
+  linkText: { color: C.primary, fontSize: 15 },
 });

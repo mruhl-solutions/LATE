@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { C } from '@/constants/colors';
 
 interface CalificacionModalProps {
   visible: boolean;
@@ -9,12 +10,7 @@ interface CalificacionModalProps {
   onOmitir: () => void;
 }
 
-export function CalificacionModal({
-  visible,
-  alias,
-  onCalificar,
-  onOmitir,
-}: CalificacionModalProps) {
+export function CalificacionModal({ visible, alias, onCalificar, onOmitir }: CalificacionModalProps) {
   const [estrellas, setEstrellas] = useState(0);
   const [saving, setSaving] = useState(false);
 
@@ -42,7 +38,7 @@ export function CalificacionModal({
                 <Ionicons
                   name={s <= estrellas ? 'star' : 'star-outline'}
                   size={44}
-                  color={s <= estrellas ? '#FBBF24' : '#4B5563'}
+                  color={s <= estrellas ? C.primary : C.border}
                 />
               </Pressable>
             ))}
@@ -54,7 +50,7 @@ export function CalificacionModal({
             disabled={estrellas === 0 || saving}
           >
             {saving ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={C.bg} size="small" />
             ) : (
               <Text style={styles.btnText}>Enviar calificación</Text>
             )}
@@ -78,31 +74,29 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   card: {
-    backgroundColor: '#1F2937',
+    backgroundColor: C.surface,
     borderRadius: 20,
     padding: 28,
     width: '100%',
     alignItems: 'center',
     gap: 12,
+    borderWidth: 1,
+    borderColor: C.border,
   },
   emoji: { fontSize: 40 },
-  title: { fontSize: 20, fontWeight: '800', color: '#F9FAFB', textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#9CA3AF', textAlign: 'center' },
-  stars: {
-    flexDirection: 'row',
-    gap: 8,
-    marginVertical: 8,
-  },
+  title: { fontSize: 20, fontWeight: '800', color: C.textPrimary, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: C.textSecondary, textAlign: 'center' },
+  stars: { flexDirection: 'row', gap: 8, marginVertical: 8 },
   btnEnviar: {
     width: '100%',
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
+    backgroundColor: C.primary,
+    borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 4,
   },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  btnText: { color: C.bg, fontWeight: '800', fontSize: 16 },
   skip: { paddingVertical: 8 },
-  skipText: { color: '#6B7280', fontSize: 14 },
+  skipText: { color: C.textMuted, fontSize: 14 },
 });

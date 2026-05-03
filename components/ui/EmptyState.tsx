@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from './AppButton';
+import { C } from '@/constants/colors';
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -12,7 +13,7 @@ interface EmptyStateProps {
 export function EmptyState({ icon, title, subtitle, action }: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={52} color="#374151" />
+      <Ionicons name={icon} size={52} color={C.border} />
       <Text style={styles.title}>{title}</Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       {action && (
@@ -35,13 +36,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#9CA3AF',
+    color: C.textSecondary,
     marginTop: 16,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: C.textMuted,
     marginTop: 8,
     textAlign: 'center',
     lineHeight: 20,

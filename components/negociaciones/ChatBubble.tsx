@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { C } from '@/constants/colors';
 import type { Mensaje } from '@/types/app';
 
 interface ChatBubbleProps {
@@ -15,8 +16,8 @@ export function ChatBubble({ mensaje, esMio }: ChatBubbleProps) {
   return (
     <View style={[styles.row, esMio ? styles.rowMio : styles.rowOtro]}>
       <View style={[styles.bubble, esMio ? styles.bubbleMio : styles.bubbleOtro]}>
-        <Text style={styles.contenido}>{mensaje.contenido}</Text>
-        <Text style={styles.hora}>{hora}</Text>
+        <Text style={[styles.contenido, esMio && styles.contenidoMio]}>{mensaje.contenido}</Text>
+        <Text style={[styles.hora, esMio && styles.horaMio]}>{hora}</Text>
       </View>
     </View>
   );
@@ -33,13 +34,17 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   bubbleMio: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: C.primary,
     borderBottomRightRadius: 4,
   },
   bubbleOtro: {
-    backgroundColor: '#374151',
+    backgroundColor: C.surface,
     borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: C.border,
   },
-  contenido: { fontSize: 15, color: '#F9FAFB', lineHeight: 20 },
-  hora: { fontSize: 10, color: 'rgba(255,255,255,0.6)', marginTop: 3, alignSelf: 'flex-end' },
+  contenido: { fontSize: 15, color: C.textSecondary, lineHeight: 20 },
+  contenidoMio: { color: C.bg },
+  hora: { fontSize: 10, color: C.textMuted, marginTop: 3, alignSelf: 'flex-end' },
+  horaMio: { color: `${C.bg}99` },
 });

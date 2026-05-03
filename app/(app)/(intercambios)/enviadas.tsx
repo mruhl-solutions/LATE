@@ -48,6 +48,6 @@ export default function EnviadasScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111827' },
+  container: { flex: 1, backgroundColor: '#1F2430' },
   list: { padding: 16 },
 });

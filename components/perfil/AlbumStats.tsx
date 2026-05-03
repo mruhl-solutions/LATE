@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { C } from '@/constants/colors';
 
 interface AlbumStatsProps {
   faltantes: number;
@@ -14,9 +15,9 @@ export function AlbumStats({ faltantes, repetidas, totalFiguritas }: AlbumStatsP
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <StatChip value={completadas} label="Tengo" color="#22C55E" />
-        <StatChip value={faltantes} label="Me faltan" color="#3B82F6" />
-        <StatChip value={repetidas} label="Repetidas" color="#F59E0B" />
+        <StatChip value={completadas} label="Tengo" color={C.accent} />
+        <StatChip value={faltantes} label="Me faltan" color={C.info} />
+        <StatChip value={repetidas} label="Repetidas" color={C.primary} />
       </View>
 
       <View style={styles.barTrack}>
@@ -33,7 +34,7 @@ export function AlbumStats({ faltantes, repetidas, totalFiguritas }: AlbumStatsP
 
 function StatChip({ value, label, color }: { value: number; label: string; color: string }) {
   return (
-    <View style={[styles.chip, { borderColor: `${color}33` }]}>
+    <View style={[styles.chip, { borderColor: `${color}44` }]}>
       <Text style={[styles.chipValue, { color }]}>{value}</Text>
       <Text style={styles.chipLabel}>{label}</Text>
     </View>
@@ -41,39 +42,21 @@ function StatChip({ value, label, color }: { value: number; label: string; color
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 20,
-    gap: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  container: { marginBottom: 20, gap: 10 },
+  row: { flexDirection: 'row', gap: 8 },
   chip: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#111827',
+    backgroundColor: C.bg,
     borderWidth: 1,
   },
   chipValue: { fontSize: 22, fontWeight: '800', lineHeight: 26 },
-  chipLabel: { fontSize: 10, color: '#6B7280', fontWeight: '600', marginTop: 1, textTransform: 'uppercase', letterSpacing: 0.4 },
-  barTrack: {
-    height: 6,
-    backgroundColor: '#374151',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    backgroundColor: '#22C55E',
-    borderRadius: 3,
-  },
-  barLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  barPct: { fontSize: 11, color: '#22C55E', fontWeight: '700' },
-  barTotal: { fontSize: 11, color: '#4B5563', fontWeight: '600' },
+  chipLabel: { fontSize: 10, color: C.textMuted, fontWeight: '600', marginTop: 1, textTransform: 'uppercase', letterSpacing: 0.4 },
+  barTrack: { height: 6, backgroundColor: C.border, borderRadius: 3, overflow: 'hidden' },
+  barFill: { height: '100%', backgroundColor: C.accent, borderRadius: 3 },
+  barLabels: { flexDirection: 'row', justifyContent: 'space-between' },
+  barPct: { fontSize: 11, color: C.accent, fontWeight: '700' },
+  barTotal: { fontSize: 11, color: C.textMuted, fontWeight: '600' },
 });

@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { C } from '@/constants/colors';
 import type { MatchResult } from '@/types/app';
 
 interface UserMatchCardProps {
@@ -33,29 +34,27 @@ export function UserMatchCard({ match }: UserMatchCardProps) {
 
   return (
     <View style={styles.card}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.alias}>@{match.alias}</Text>
           {match.distancia_km != null && (
             <Text style={styles.distancia}>
-              <Ionicons name="location-outline" size={11} color="#6B7280" /> {match.distancia_km} km
+              <Ionicons name="location-outline" size={11} color={C.textMuted} /> {match.distancia_km} km
             </Text>
           )}
         </View>
         {match.es_bidireccional && (
           <View style={styles.biBadge}>
-            <Ionicons name="checkmark-circle" size={12} color="#22C55E" />
+            <Ionicons name="checkmark-circle" size={12} color={C.accent} />
             <Text style={styles.biText}>Intercambio posible</Text>
           </View>
         )}
       </View>
 
-      {/* Lo que tiene que yo busco */}
       {tieneMias && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={[styles.dot, { backgroundColor: '#3B82F6' }]} />
+            <View style={[styles.dot, { backgroundColor: C.info }]} />
             <Text style={styles.sectionLabel}>
               Tiene {match.ellos_tienen_yo_busco.length} que buscás
             </Text>
@@ -64,11 +63,10 @@ export function UserMatchCard({ match }: UserMatchCardProps) {
         </View>
       )}
 
-      {/* Lo que necesita y yo tengo */}
       {necesitaMias && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={[styles.dot, { backgroundColor: '#F59E0B' }]} />
+            <View style={[styles.dot, { backgroundColor: C.primary }]} />
             <Text style={styles.sectionLabel}>
               Necesita {match.yo_tengo_ellos_buscan.length} que tenés
             </Text>
@@ -78,7 +76,7 @@ export function UserMatchCard({ match }: UserMatchCardProps) {
       )}
 
       <Pressable style={styles.proponerBtn} onPress={handleProponer}>
-        <Ionicons name="swap-horizontal" size={16} color="#fff" />
+        <Ionicons name="swap-horizontal" size={16} color={C.bg} />
         <Text style={styles.proponerText}>Proponer intercambio</Text>
       </Pressable>
     </View>
@@ -87,50 +85,48 @@ export function UserMatchCard({ match }: UserMatchCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1F2937',
+    backgroundColor: C.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 10,
     gap: 12,
+    borderWidth: 1,
+    borderColor: C.border,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
+  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   headerLeft: { gap: 2 },
-  alias: { fontSize: 17, fontWeight: '800', color: '#F9FAFB' },
-  distancia: { fontSize: 12, color: '#6B7280' },
+  alias: { fontSize: 17, fontWeight: '800', color: C.textPrimary },
+  distancia: { fontSize: 12, color: C.textMuted },
   biBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#052e16',
+    backgroundColor: C.accentDark,
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#16653444',
+    borderColor: `${C.accent}44`,
   },
-  biText: { fontSize: 11, color: '#22C55E', fontWeight: '700' },
+  biText: { fontSize: 11, color: C.accent, fontWeight: '700' },
   section: {
-    backgroundColor: '#111827',
+    backgroundColor: C.bg,
     borderRadius: 10,
     padding: 10,
     gap: 4,
   },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 7, height: 7, borderRadius: 4 },
-  sectionLabel: { fontSize: 12, fontWeight: '700', color: '#D1D5DB' },
-  numeros: { fontSize: 12, color: '#6B7280', lineHeight: 18, paddingLeft: 13 },
+  sectionLabel: { fontSize: 12, fontWeight: '700', color: C.textSecondary },
+  numeros: { fontSize: 12, color: C.textMuted, lineHeight: 18, paddingLeft: 13 },
   proponerBtn: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 10,
+    backgroundColor: C.primary,
+    borderRadius: 12,
     paddingVertical: 11,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 7,
   },
-  proponerText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  proponerText: { color: C.bg, fontWeight: '800', fontSize: 14 },
 });

@@ -154,7 +154,7 @@ export default function ChatScreen() {
     setShowRating(false);
   };
 
-  if (!intercambio) return <ActivityIndicator style={styles.loader} color="#7C3AED" />;
+  if (!intercambio) return <ActivityIndicator style={styles.loader} color="#F0A868" />;
 
   const terminado = intercambio.estado === 'terminado' || intercambio.estado === 'cancelado';
 
@@ -177,7 +177,7 @@ export default function ChatScreen() {
             <EstadoBadge estado={intercambio.estado} />
             {intercambio.estado === 'terminado' && !showRating && (
               <Pressable onPress={() => setShowRating(true)} style={styles.calificarBtn}>
-                <Ionicons name="star-outline" size={14} color="#FBBF24" />
+                <Ionicons name="star-outline" size={14} color="#F0A868" />
                 <Text style={styles.calificarText}>Calificar</Text>
               </Pressable>
             )}
@@ -280,13 +280,13 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111827' },
+  container: { flex: 1, backgroundColor: '#1F2430' },
   loader: { flex: 1 },
   propuestaBox: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#252B3B',
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: '#2E3650',
   },
   propuestaRow: {
     flexDirection: 'row',
@@ -303,9 +303,9 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#FBBF2444',
+    borderColor: '#F0A86844',
   },
-  calificarText: { fontSize: 12, color: '#FBBF24', fontWeight: '600' },
+  calificarText: { fontSize: 12, color: '#F0A868', fontWeight: '600' },
   numerosRow: { flexDirection: 'row', gap: 12 },
   numerosCol: { flex: 1 },
   numerosLabel: { fontSize: 11, color: '#6B7280', marginBottom: 2, textTransform: 'uppercase' },
@@ -317,18 +317,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: '#374151',
+    borderTopColor: '#2E3650',
   },
   btnConfirmar: {
     flex: 1,
-    backgroundColor: '#22C55E',
+    backgroundColor: '#A8D5B9',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
   },
   btnFinalizar: {
     flex: 1,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#F0A868',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
@@ -350,12 +350,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: '#374151',
+    borderTopColor: '#2E3650',
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#1F2937',
-    color: '#F9FAFB',
+    backgroundColor: '#252B3B',
+    color: '#F5F0EB',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#F0A868',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#374151',
+    borderTopColor: '#2E3650',
     gap: 8,
   },
   terminadoText: { color: '#6B7280', fontSize: 13 },

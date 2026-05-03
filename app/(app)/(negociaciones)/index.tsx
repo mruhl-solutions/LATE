@@ -111,11 +111,11 @@ export default function NegociacionesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111827' },
+  container: { flex: 1, backgroundColor: '#1F2430' },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#F9FAFB',
+    color: '#F5F0EB',
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: 20,
     marginBottom: 4,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#252B3B',
     borderRadius: 12,
     padding: 4,
   },
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 9,
   },
-  tabActive: { backgroundColor: '#7C3AED' },
+  tabActive: { backgroundColor: '#F0A868' },
   tabText: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
   tabTextActive: { color: '#fff' },
   list: { padding: 16 },

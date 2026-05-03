@@ -113,7 +113,7 @@ export default function GrupoScreen() {
   if (loadingGrupo) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color="#7C3AED" />
+        <ActivityIndicator color="#F0A868" />
       </View>
     );
   }
@@ -139,7 +139,7 @@ export default function GrupoScreen() {
             <Text style={styles.title}>{grupo.nombre}</Text>
             <View style={styles.metaRow}>
               <View style={styles.codigoBadge}>
-                <Ionicons name="key-outline" size={12} color="#7C3AED" />
+                <Ionicons name="key-outline" size={12} color="#F0A868" />
                 <Text style={styles.codigoText}>{grupo.codigo.toUpperCase()}</Text>
               </View>
               <Text style={styles.miembrosText}>
@@ -149,7 +149,7 @@ export default function GrupoScreen() {
           </View>
           {esMiembro && (
             <Pressable style={styles.shareBtn} onPress={handleCompartir}>
-              <Ionicons name="share-social-outline" size={20} color="#7C3AED" />
+              <Ionicons name="share-social-outline" size={20} color="#F0A868" />
             </Pressable>
           )}
         </View>
@@ -211,32 +211,32 @@ export default function GrupoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111827' },
+  container: { flex: 1, backgroundColor: '#1F2430' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: '#2E3650',
   },
   headerTop: { flexDirection: 'row', alignItems: 'flex-start' },
-  title: { fontSize: 22, fontWeight: '800', color: '#F9FAFB' },
+  title: { fontSize: 22, fontWeight: '800', color: '#F5F0EB' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   codigoBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#2e1065',
+    backgroundColor: '#3D2210',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 20,
   },
-  codigoText: { fontSize: 12, fontWeight: '700', color: '#7C3AED', letterSpacing: 1 },
+  codigoText: { fontSize: 12, fontWeight: '700', color: '#F0A868', letterSpacing: 1 },
   miembrosText: { fontSize: 12, color: '#6B7280' },
   shareBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2e1065',
+    backgroundColor: '#3D2210',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginTop: 12,
-    backgroundColor: '#111827',
+    backgroundColor: '#1F2430',
     borderRadius: 10,
     padding: 10,
   },
@@ -255,12 +255,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1F2937',
+    backgroundColor: '#252B3B',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  inviteCodeText: { fontSize: 16, fontWeight: '800', color: '#F9FAFB', letterSpacing: 3 },
+  inviteCodeText: { fontSize: 16, fontWeight: '800', color: '#F5F0EB', letterSpacing: 3 },
   joinBox: { padding: 24, gap: 16 },
   joinText: { fontSize: 15, color: '#9CA3AF', lineHeight: 22 },
   list: { padding: 16 },

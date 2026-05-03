@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable } from 'react-native';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { cleanInventoryString } from '@/lib/parsers';
+import { C } from '@/constants/colors';
 
 interface InventarioInputProps {
   label: string;
@@ -17,13 +18,11 @@ export function InventarioInput({
   icon,
   value,
   onChangeText,
-  accentColor = '#7C3AED',
+  accentColor = C.primary,
   savedCount = 0,
 }: InventarioInputProps) {
   const [focused, setFocused] = useState(false);
-
   const parsedCount = useMemo(() => cleanInventoryString(value).length, [value]);
-
   const isDirty = parsedCount !== savedCount;
 
   return (
@@ -43,14 +42,14 @@ export function InventarioInput({
         style={[
           styles.input,
           { borderColor: focused ? accentColor : `${accentColor}30` },
-          focused && { shadowColor: accentColor, shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
+          focused && { shadowColor: accentColor, shadowOpacity: 0.15, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
         ]}
         value={value}
         onChangeText={onChangeText}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholder="Ej: 12, 45, 102, 300-320"
-        placeholderTextColor="#4B5563"
+        placeholder="Ej: 12, 45, 102, 300"
+        placeholderTextColor={C.textMuted}
         keyboardType="numbers-and-punctuation"
         multiline
         autoCapitalize="none"
@@ -69,33 +68,15 @@ export function InventarioInput({
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  iconWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  label: { flex: 1, fontSize: 13, fontWeight: '700', color: '#D1D5DB', letterSpacing: 0.3 },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 20,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  iconWrap: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  label: { flex: 1, fontSize: 13, fontWeight: '700', color: C.textSecondary, letterSpacing: 0.3 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
   badgeText: { fontSize: 13, fontWeight: '800' },
   dirtyDot: { width: 6, height: 6, borderRadius: 3 },
   input: {
-    backgroundColor: '#0D1117',
-    color: '#F9FAFB',
+    backgroundColor: C.surfaceDeep,
+    color: C.textPrimary,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingTop: 12,
@@ -106,10 +87,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: 'monospace',
   },
-  hint: {
-    marginTop: 5,
-    fontSize: 11,
-    color: '#4B5563',
-    marginLeft: 2,
-  },
+  hint: { marginTop: 5, fontSize: 11, color: C.textMuted, marginLeft: 2 },
 });
