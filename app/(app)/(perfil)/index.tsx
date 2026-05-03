@@ -25,14 +25,11 @@ import type { Album } from '@/types/app';
 export default function PerfilScreen() {
   const {
     profile,
-    albums,
     fetchProfile,
     fetchAlbums,
     updateInventario,
     crearAlbum,
     actualizarAlbum,
-    activarAlbum,
-    eliminarAlbum,
   } = useProfile();
   const { signOut } = useAuth();
   const user = useAuthStore((s) => s.user);
@@ -100,15 +97,6 @@ export default function PerfilScreen() {
     }
   };
 
-  const handleActivarAlbum = async (album: Album) => {
-    if (album.is_active) return;
-    try {
-      await activarAlbum(album.id);
-    } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo cambiar de álbum.');
-    }
-  };
-
   const handleRenombrarAlbum = async () => {
     if (!editingAlbum || !editAlbumName.trim()) return;
     try {
@@ -118,27 +106,6 @@ export default function PerfilScreen() {
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo renombrar.');
     }
-  };
-
-  const handleEliminarAlbum = (album: Album) => {
-    Alert.alert(
-      'Eliminar álbum',
-      `¿Eliminar "${album.nombre}"? Perderás su inventario.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await eliminarAlbum(album.id);
-            } catch (e: unknown) {
-              Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo eliminar.');
-            }
-          },
-        },
-      ],
-    );
   };
 
   const handleSignOut = () => {
@@ -245,70 +212,6 @@ export default function PerfilScreen() {
             savedCount={profile?.repetidas.length ?? 0}
           />
           <AppButton title="Guardar inventario" onPress={handleGuardarInventario} loading={saving} />
-        </View>
-
-        {/* Álbumes */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Mis Álbumes</Text>
-              <Text style={styles.sectionHint}>
-                Organizá distintas colecciones por separado.
-              </Text>
-            </View>
-            <Pressable style={styles.addAlbumBtn} onPress={() => setShowCreateAlbum(true)}>
-              <Ionicons name="add" size={16} color={C.primary} />
-              <Text style={styles.addAlbumText}>Nuevo</Text>
-            </Pressable>
-          </View>
-
-          {albums.length === 0 && (
-            <View style={styles.emptyAlbums}>
-              <Ionicons name="albums-outline" size={28} color={C.border} />
-              <Text style={styles.emptyAlbumsText}>
-                Sin álbumes guardados. Creá uno para organizar distintas colecciones.
-              </Text>
-            </View>
-          )}
-
-          {albums.map((album) => (
-            <View key={album.id} style={[styles.albumItem, album.is_active && styles.albumItemActive]}>
-              <Pressable style={styles.albumMain} onPress={() => handleActivarAlbum(album)}>
-                <View style={styles.albumInfo}>
-                  {album.is_active && (
-                    <View style={styles.activeBadge}>
-                      <Ionicons name="checkmark-circle" size={12} color={C.accent} />
-                      <Text style={styles.activeBadgeText}>Activo</Text>
-                    </View>
-                  )}
-                  <Text style={[styles.albumNombre, album.is_active && styles.albumNombreActive]}>
-                    {album.nombre}
-                  </Text>
-                  <Text style={styles.albumStats}>
-                    {album.necesito.length} necesito · {album.repetidas.length} repetidas
-                  </Text>
-                </View>
-                {!album.is_active && (
-                  <Text style={styles.activarText}>Activar</Text>
-                )}
-              </Pressable>
-
-              <View style={styles.albumActions}>
-                <Pressable
-                  style={styles.albumActionBtn}
-                  onPress={() => { setEditingAlbum(album); setEditAlbumName(album.nombre); }}
-                >
-                  <Ionicons name="pencil-outline" size={15} color={C.textMuted} />
-                </Pressable>
-                <Pressable
-                  style={styles.albumActionBtn}
-                  onPress={() => handleEliminarAlbum(album)}
-                >
-                  <Ionicons name="trash-outline" size={15} color={C.danger} />
-                </Pressable>
-              </View>
-            </View>
-          ))}
         </View>
 
         <AppButton title="Cerrar sesión" onPress={handleSignOut} variant="danger" />

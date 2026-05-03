@@ -46,45 +46,52 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Logo */}
-        <View style={styles.logoWrap}>
-          <Image
-            source={require('@/assets/images/logo.png')}
-            style={styles.logoImg}
-            resizeMode="contain"
-          />
-          <Text style={styles.appName}>
-            <Text style={styles.nameLA}>LA</Text>
-            <Text style={styles.nameTE}>TE</Text>
-          </Text>
-          <Text style={styles.subtitle}>Intercambio de figuritas</Text>
+        <View style={styles.mainContent}>
+          {/* Logo */}
+          <View style={styles.logoWrap}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logoImg}
+              resizeMode="contain"
+            />
+            <Text style={styles.appName}>
+              <Text style={styles.nameLA}>LA</Text>
+              <Text style={styles.nameTE}>TE</Text>
+            </Text>
+            <Text style={styles.subtitle}>Intercambio de figuritas</Text>
+          </View>
+
+          {/* Form */}
+          <View style={styles.form}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor={C.textMuted}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Contraseña"
+              placeholderTextColor={C.textMuted}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            <AppButton title="Ingresar" onPress={handleLogin} loading={loading} />
+
+            <Link href="/(auth)/registro" style={styles.link}>
+              <Text style={styles.linkText}>¿No tenés cuenta? Registrate</Text>
+            </Link>
+          </View>
         </View>
 
-        {/* Form */}
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor={C.textMuted}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Contraseña"
-            placeholderTextColor={C.textMuted}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-
-          <AppButton title="Ingresar" onPress={handleLogin} loading={loading} />
-
-          <Link href="/(auth)/registro" style={styles.link}>
-            <Text style={styles.linkText}>¿No tenés cuenta? Registrate</Text>
-          </Link>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Powered by Matías Ruhl</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -95,9 +102,12 @@ const styles = StyleSheet.create({
   kav: { flex: 1, backgroundColor: C.bg },
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 28,
-    paddingBottom: 48,
+    paddingBottom: 28, // Reducido ligeramente para acomodar el footer
+  },
+  mainContent: {
+    flex: 1,
+    justifyContent: 'center',
   },
   logoWrap: {
     alignItems: 'center',
@@ -134,4 +144,14 @@ const styles = StyleSheet.create({
   },
   link: { marginTop: 20, alignSelf: 'center' },
   linkText: { color: C.primary, fontSize: 15 },
+  footer: {
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  footerText: {
+    color: C.textMuted,
+    fontSize: 12,
+    fontWeight: '500',
+    letterSpacing: 0.5,
+  },
 });

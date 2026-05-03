@@ -4,16 +4,24 @@
     "slug": "late",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/images/logo.png",
     "scheme": "lateapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1F2430"
+    },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.mruhlsolutions.late"
+      "bundleIdentifier": "com.mruhlsolutions.late",
+      "icon": "./assets/logo.png"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FF6B35"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1F2430"
       },
       "package": "com.mruhlsolutions.late"
     },
@@ -22,14 +30,25 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "LATE necesita tu ubicación para encontrar coleccionistas cercanos.",
-          "locationWhenInUsePermission": "LATE necesita tu ubicación para encontrar coleccionistas cercanos."
+          "locationAlwaysAndWhenInUsePermission": "LATE necesita tu ubicación para encontrar intercambios posibles",
+          "locationWhenInUsePermission": "LATE necesita tu ubicación para encontrar intercambios posibles."
         }
       ],
       "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "build": {
+      "preview": {
+        "android": {
+          "buildType": "apk"
+        },
+        "ios": {
+          "simulator": false
+        }
+      },
+      "production": {}
     }
   }
 }

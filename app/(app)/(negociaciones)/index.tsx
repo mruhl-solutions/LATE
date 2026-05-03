@@ -263,6 +263,6 @@ const styles = StyleSheet.create({
     borderTopColor: C.border,
   },
   previewRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  previewLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted, width: 34 },
+  previewLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted, width: 50 },
   previewNums: { flex: 1, fontSize: 11, color: C.textSecondary },
 });
