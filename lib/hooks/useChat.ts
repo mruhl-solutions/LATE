@@ -54,6 +54,7 @@ export function useChat(recipientId: string) {
       const { data, error } = await supabase
         .from('mensajes')
         .insert({
+          autor_id: user.id,
           sender_id: user.id,
           recipient_id: recipientId,
           contenido: contenido.trim(),

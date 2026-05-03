@@ -18,9 +18,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useChat } from '@/lib/hooks/useChat';
 import { useIntercambios } from '@/lib/hooks/useIntercambios';
-import { useCalificacion } from '@/lib/hooks/useCalificacion';
 import { ChatBubble } from '@/components/negociaciones/ChatBubble';
-import { CalificacionModal } from '@/components/negociaciones/CalificacionModal';
 import { EstadoBadge } from '@/components/intercambios/EstadoBadge';
 import { arrayToDisplayString } from '@/lib/parsers';
 import { C } from '@/constants/colors';
@@ -31,13 +29,11 @@ export default function ChatScreen() {
   const navigation = useNavigation();
   const user = useAuthStore((s) => s.user);
   const { confirmar, cancelar, finalizar, eliminarChat } = useIntercambios();
-  const { calificar, yaCalifique } = useCalificacion();
 
   const [intercambios, setIntercambios] = useState<IntercambioConAlias[]>([]);
   const [otroAlias, setOtroAlias] = useState('');
   const [texto, setTexto] = useState('');
   const [sending, setSending] = useState(false);
-  const [showRating, setShowRating] = useState(false);
   const [selectedIntercambio, setSelectedIntercambio] = useState<IntercambioConAlias | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const flatListRef = useRef<FlatList>(null);
@@ -75,10 +71,6 @@ export default function ChatScreen() {
       setOtroAlias(alias);
       navigation.setOptions({ title: `@${alias}` });
 
-      if (first.estado === 'terminado') {
-        const yaCal = await yaCalifique(first.id);
-        if (!yaCal) setShowRating(true);
-      }
     } else {
       // No hay intercambios aún: obtener el alias del destinatario
       const { data: pData } = await supabase
@@ -134,10 +126,7 @@ export default function ChatScreen() {
           try {
             if (accion === 'confirmar') await confirmar(intercambioId);
             else if (accion === 'cancelar') await cancelar(intercambioId);
-            else {
-              await finalizar(intercambioId);
-              setShowRating(true);
-            }
+            else await finalizar(intercambioId);
             await cargarIntercambios();
           } catch (e: unknown) {
             Alert.alert('Error', e instanceof Error ? e.message : 'Operación fallida.');
@@ -165,16 +154,6 @@ export default function ChatScreen() {
     );
   };
 
-  const handleCalificar = async (estrellas: number) => {
-    if (!selectedIntercambio) return;
-    const otroId =
-      selectedIntercambio.iniciador_id === user?.id
-        ? selectedIntercambio.receptor_id
-        : selectedIntercambio.iniciador_id;
-    await calificar(selectedIntercambio.id, otroId, estrellas);
-    setShowRating(false);
-  };
-
   // ── Helpers de perspectiva ──────────────────────────────────
   const perspectiva = (inter: IntercambioConAlias) => {
     const soyIniciador = inter.iniciador_id === user?.id;
@@ -199,15 +178,7 @@ export default function ChatScreen() {
     selectedIntercambio?.estado === 'cancelado';
 
   return (
-    <>
-      <CalificacionModal
-        visible={showRating}
-        alias={otroAlias}
-        onCalificar={handleCalificar}
-        onOmitir={() => setShowRating(false)}
-      />
-
-      <KeyboardAvoidingView
+    <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={100}
@@ -244,12 +215,6 @@ export default function ChatScreen() {
             <View style={styles.panel}>
               <View style={styles.panelTop}>
                 <EstadoBadge estado={selectedIntercambio.estado} />
-                {selectedIntercambio.estado === 'terminado' && !showRating && (
-                  <Pressable onPress={() => setShowRating(true)} style={styles.calificarBtn}>
-                    <Ionicons name="star" size={13} color={C.primary} />
-                    <Text style={styles.calificarText}>Calificar</Text>
-                  </Pressable>
-                )}
               </View>
 
               {(() => {
@@ -395,8 +360,7 @@ export default function ChatScreen() {
             <Ionicons name="send" size={18} color="#fff" />
           </Pressable>
         </View>
-      </KeyboardAvoidingView>
-    </>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -433,17 +397,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  calificarBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: C.primaryDark,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  calificarText: { fontSize: 12, color: C.primary, fontWeight: '600' },
-
   intercambioGrid: {
     flexDirection: 'row',
     gap: 0,
